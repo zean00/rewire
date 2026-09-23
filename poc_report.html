@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REFLEX · DECIDE · THINK — PoC Report (Qwen3.5-4B)</title>
+<style>
+  :root{
+    --bg:#0b0f17; --bg2:#0e1420; --panel:#121a2a; --panel2:#0f1626;
+    --line:#1f2b40; --line2:#2a3a55;
+    --text:#e6edf7; --muted:#93a4bd; --dim:#6b7d99;
+    --cyan:#22d3ee; --violet:#a78bfa; --green:#34d399; --amber:#fbbf24; --red:#f87171; --coral:#fb923c;
+    --grad:linear-gradient(90deg,#22d3ee,#a78bfa);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;overflow-x:hidden}
+  ::selection{background:#22d3ee44}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+  a{color:var(--cyan);text-decoration:none} a:hover{text-decoration:underline}
+
+  /* ---------- progress + nav ---------- */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--grad);z-index:99;transition:width .1s linear}
+  nav{position:fixed;top:0;left:0;right:0;z-index:90;display:flex;align-items:center;gap:6px;padding:10px 22px;
+      background:#0b0f17dd;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .logo{font-weight:800;letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+  nav .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  nav a.nl{color:var(--muted);font-size:.86rem;padding:6px 11px;border-radius:8px;white-space:nowrap}
+  nav a.nl:hover{color:var(--text);background:#ffffff0d;text-decoration:none}
+  nav a.nl.active{color:#0b0f17;background:var(--grad);font-weight:700}
+  @media(max-width:900px){nav a.nl{display:none}}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+  section{padding:78px 0 30px}
+  .kicker{font-size:.78rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);margin-bottom:10px}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800;margin-bottom:18px;letter-spacing:-.01em}
+  h3{font-size:1.08rem;font-weight:700;margin:26px 0 10px;color:var(--text)}
+  p{color:var(--muted);margin-bottom:12px;max-width:78ch}
+  p b, li b{color:var(--text)}
+  ul.plain{list-style:none;margin:0 0 14px}
+  ul.plain li{padding-left:20px;position:relative;color:var(--muted);margin-bottom:8px;max-width:80ch}
+  ul.plain li::before{content:"▸";position:absolute;left:0;color:var(--cyan)}
+
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- hero ---------- */
+  header.hero{position:relative;padding:150px 0 84px;text-align:center;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:-40% -20% auto;height:120%;
+    background:radial-gradient(600px 320px at 30% 20%,#22d3ee22,transparent 70%),
+               radial-gradient(700px 380px at 70% 30%,#a78bfa22,transparent 70%);pointer-events:none}
+  .badge{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--violet);border:1px solid #a78bfa55;border-radius:999px;padding:5px 14px;margin-bottom:22px;background:#a78bfa0d}
+  h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:900;letter-spacing:-.02em;line-height:1.08;margin-bottom:18px}
+  h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{font-size:1.12rem;color:var(--muted);max-width:64ch;margin:0 auto 34px}
+  .hero .sub b{color:var(--text)}
+  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:960px;margin:0 auto;text-align:left}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+  .stat::after{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--grad)}
+  .stat .v{font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+  .stat .v small{font-size:.95rem;color:var(--muted);font-weight:600}
+  .stat .l{font-size:.8rem;color:var(--muted);margin-top:2px}
+  .verdict-strip{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:30px}
+  .chip{font-size:.82rem;font-weight:600;border-radius:999px;padding:7px 14px;border:1px solid var(--line2);color:var(--muted);background:var(--panel2)}
+  .chip.good{color:var(--green);border-color:#34d39944}
+  .chip .mono{color:inherit}
+
+  /* ---------- cards / panels ---------- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h4{font-size:.98rem;font-weight:800;margin-bottom:8px}
+  .card p{font-size:.9rem;margin-bottom:6px}
+  .card .tag{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    padding:3px 9px;border-radius:6px;margin-bottom:10px}
+  .tag.cyan{color:var(--cyan);background:#22d3ee18}.tag.violet{color:var(--violet);background:#a78bfa18}
+  .tag.amber{color:var(--amber);background:#fbbf2418}.tag.green{color:var(--green);background:#34d39918}
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .fstep{flex:1 1 150px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:relative;font-size:.86rem}
+  .fstep .t{font-weight:800;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+  .fstep .d{color:var(--muted);font-size:.8rem}
+  .farrow{align-self:center;color:var(--dim);font-size:1.2rem}
+
+  /* ---------- tables ---------- */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:.88rem}
+  th{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);text-align:left;
+     padding:10px 14px;border-bottom:1px solid var(--line2);background:var(--panel2);white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:#ffffff08}
+  td .mono,th .mono{color:var(--text)}
+  tr.hl td{background:#22d3ee10;color:var(--text)}
+  tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--cyan)}
+  .best{color:var(--green);font-weight:800}
+  .worst{color:var(--red);font-weight:700}
+  .foot{font-size:.78rem;color:var(--dim);margin-top:-8px;margin-bottom:14px}
+
+  /* ---------- bar charts ---------- */
+  .bars{display:flex;flex-direction:column;gap:9px;margin:14px 0}
+  .brow{display:grid;grid-template-columns:190px 1fr 64px;gap:10px;align-items:center;font-size:.86rem}
+  .brow .bl{color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .btrack{height:22px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+  .brow .bfill{height:100%;width:0;border-radius:5px 0 0 5px;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+  .brow .bv{color:var(--text);font-weight:700}
+  .bf-cyan{background:linear-gradient(90deg,#22d3ee88,#22d3ee)}
+  .bf-violet{background:linear-gradient(90deg,#a78bfa88,#a78bfa)}
+  .bf-coral{background:linear-gradient(90deg,#fb923c88,#fb923c)}
+  .bf-red{background:linear-gradient(90deg,#f8717188,#f87171)}
+  .bf-green{background:linear-gradient(90deg,#34d39988,#34d399)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:6px 0 2px}
+  .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:baseline}
+  .lg-cyan::before{background:var(--cyan)} .lg-violet::before{background:var(--violet)}
+  .lg-coral::before{background:var(--coral)} .lg-red::before{background:var(--red)}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 0}
+  .tab{cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--muted);
+       padding:9px 16px;border-radius:10px;font-size:.88rem;font-weight:600;transition:all .2s}
+  .tab:hover{color:var(--text);border-color:var(--cyan)}
+  .tab.active{background:var(--grad);color:#0b0f17;border-color:transparent;font-weight:800}
+  .panel{display:none}
+  .panel.active{display:block;animation:fadein .45s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- misc ---------- */
+  .callout{border:1px solid var(--line2);border-left:3px solid var(--violet);background:var(--panel2);
+    border-radius:10px;padding:14px 18px;margin:16px 0;font-size:.92rem;color:var(--muted)}
+  .callout b{color:var(--text)}
+  .callout.win{border-left-color:var(--green)}
+  .callout.fail{border-left-color:var(--red)}
+  .callout.note{border-left-color:var(--amber)}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .pill{font-size:.78rem;padding:5px 12px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);background:var(--panel2)}
+  .timeline{border-left:2px solid var(--line2);margin:20px 0 8px;padding-left:24px}
+  .titem{position:relative;margin-bottom:26px}
+  .titem::before{content:"";position:absolute;left:-31px;top:6px;width:12px;height:12px;border-radius:50%;
+    background:var(--bg);border:3px solid var(--cyan)}
+  .titem.v::before{border-color:var(--violet)}
+  .titem .tphase{font-size:.74rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .titem.v .tphase{color:var(--violet)}
+  .titem h4{font-size:1rem;margin:2px 0 6px}
+  .titem p{font-size:.9rem;margin-bottom:4px}
+  .scatter-tip{position:fixed;pointer-events:none;background:#0b0f17f0;border:1px solid var(--line2);border-radius:8px;
+    padding:8px 11px;font-size:.78rem;color:var(--text);opacity:0;transition:opacity .12s;z-index:100;white-space:nowrap}
+  footer{border-top:1px solid var(--line);margin-top:60px;padding:34px 0 60px;text-align:center;color:var(--dim);font-size:.82rem}
+  .sig{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  code{background:#22d3ee12;border:1px solid #22d3ee22;border-radius:5px;padding:1px 6px;font-size:.84em;color:#7dd3fc}
+
+  /* ---------- architecture stack ---------- */
+  .stack{display:flex;flex-direction:column;margin:16px 0 6px}
+  .slayer{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:13px 18px;position:relative}
+  .slayer + .slayer,.sdiv + .slayer{margin-top:10px}
+  .slayer b{color:var(--text)}
+  .slayer .sname{font-weight:800;font-size:.95rem;margin-bottom:2px}
+  .slayer .sname .sanalogy{font-weight:600;font-size:.76rem;color:var(--dim);margin-left:8px;white-space:nowrap}
+  .slayer .sdesc{font-size:.84rem;color:var(--muted);max-width:72ch}
+  .slayer .sdesc code{font-size:.8em}
+  .schip{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;
+    padding:5px 12px;white-space:nowrap;border:1px solid var(--line2);color:var(--muted);background:var(--panel2)}
+  .schip.ok{color:var(--green);border-color:#34d39944;background:#34d3990d}
+  .schip.new{color:var(--violet);border-color:#a78bfa55;background:#a78bfa14}
+  .slayer.new{border-color:#a78bfa44;background:#a78bfa08}
+  .slayer.hot{border-color:#22d3ee55;background:#22d3ee08}
+  .slayer.hot::after{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--grad);border-radius:12px 0 0 12px}
+  .slayer.hot .schip.new{color:var(--cyan);border-color:#22d3ee55;background:#22d3ee14}
+  .sdiv{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:.68rem;font-weight:700;
+    letter-spacing:.18em;text-transform:uppercase;margin:12px 4px 10px}
+  .sdiv::before,.sdiv::after{content:"";flex:1;height:1px;background:var(--line2)}
+  @media(max-width:700px){.slayer{grid-template-columns:1fr}.slayer .schip{justify-self:start}}
+
+  /* ---------- turn sequence (who calls whom) ---------- */
+  .seq{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;margin:16px 0 8px}
+  .seq-col{display:flex;flex-direction:column}
+  .seq-head{font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;text-align:center;
+    padding:7px 6px;border-radius:8px;margin-bottom:12px;border:1px solid var(--line2);color:var(--muted)}
+  .seq-head.hv{color:var(--violet);border-color:#a78bfa55;background:#a78bfa0d}
+  .seq-head.hc{color:var(--cyan);border-color:#22d3ee55;background:#22d3ee0d}
+  .seq-step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;
+    font-size:.8rem;color:var(--muted);position:relative;margin-bottom:22px}
+  .seq-col.hv .seq-step{border-color:#a78bfa3a}
+  .seq-col.hc .seq-step{border-color:#22d3ee44;background:#22d3ee06}
+  .seq-col.hd .seq-step{border-style:dashed;opacity:.92}
+  .seq-step:last-child{margin-bottom:0}
+  .seq-step .n{display:inline-flex;width:19px;height:19px;border-radius:50%;background:var(--grad);color:#0b0f17;
+    font-weight:800;font-size:.7rem;align-items:center;justify-content:center;margin-right:7px;flex:none;vertical-align:-4px}
+  .seq-col.hv .seq-step .n{background:var(--violet)}
+  .seq-step .t{font-weight:800;font-size:.84rem;color:var(--text)}
+  .seq-step .callby{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--dim);border:1px dashed var(--line2);border-radius:999px;padding:2px 8px;margin-bottom:7px}
+  .seq-step .cond{color:var(--amber);font-weight:700}
+  .seq-xing{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.72rem;color:var(--dim);margin:10px 0 4px}
+  .seq-xing b{color:var(--muted);font-weight:700}
+  @media(max-width:820px){.seq{grid-template-columns:1fr}}
+  .tblwrap.wrap-cells td,.tblwrap.wrap-cells th{white-space:normal}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="scatter-tip" id="tip"></div>
+
+<nav>
+  <span class="logo">REFLEX·<b>DECIDE</b>·THINK</span>
+  <a class="nl" href="#background">Background</a>
+  <a class="nl" href="#goal">Goal</a>
+  <a class="nl" href="#approach">Approach</a>
+  <a class="nl" href="#work">Work Done</a>
+  <a class="nl" href="#results">Results</a>
+  <a class="nl" href="#verdict">Verdict</a>
+  <a class="nl" href="#miniwob">MiniWoB++</a>
+  <a class="nl" href="#refs">References</a>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Proof of Concept · Qwen3.5-4B · hybrid Gated DeltaNet</span>
+    <h1>Don't generate.<br><span class="g">Decide, think, then generate.</span></h1>
+    <p class="sub">Can a small open-weights model be made <b>better than its own vanilla behaviour</b> at
+      browser use — on <b>both speed and accuracy</b>? This PoC replaced the model's default
+      "always think, then generate prose" loop with explicit, calibrated <b>decision reads</b> and a
+      <b>three-mode output router</b>. Every number below is measured, matched-gate, and McNemar-tested.</p>
+    <div class="statgrid">
+      <div class="stat reveal"><div class="v mono"><span data-count="0.856" data-dec="3">0</span></div><div class="l">MCQ accuracy, hybrid decide @ <b>0.26 s</b> — vs 0.490 for the model's native think-always</div></div>
+      <div class="stat reveal"><div class="v mono"><span data-count="3.2" data-dec="1">0</span><small>×</small></div><div class="l">web element accuracy vs native default — at <b>~80×</b> lower latency (batched decide: 0.34 s vs 27.4 s)</div></div>
+      <div class="stat reveal"><div class="v mono"><span data-count="0.320" data-dec="3">0</span></div><div class="l">full tool-call accuracy (decide→think→generate) vs 0.274 one-shot JSON, <b>p=0.003</b></div></div>
+      <div class="stat reveal"><div class="v mono"><span data-count="0" data-dec="0">0</span></div><div class="l">parse failures on the chain's output — schema-valid by construction (native default: 79% fail)</div></div>
+    </div>
+    <div class="verdict-strip">
+      <span class="chip good">✓ vs native default (web): 2.8–3.6× accuracy, 80× faster (batched)</span>
+      <span class="chip good">✓ vs best vanilla config: +9.5 pts elements at ~1.3× its latency, +4.6 pts actions (p=0.003)</span>
+      <span class="chip">≈11,000 scored decisions · 16 arms · live-browser demo · multimodal read</span>
+    </div>
+  </div>
+</header>
+
+<!-- ================= BACKGROUND ================= -->
+<section id="background">
+  <div class="wrap">
+    <div class="kicker">Background</div>
+    <h2>The routing that open weights never shipped</h2>
+    <div class="grid2">
+      <div class="card reveal">
+        <span class="tag cyan">Phase 0 finding</span>
+        <h4>Hosted servers route modes; open weights don't</h4>
+        <p>Frontier model servers quietly decide <i>how</i> to answer each request — a quick classification, a
+           tool call, or a full generation ("auto" mode). That router lives on the server. The open-weights
+           checkpoint ships <b>no such router</b>: every prompt gets the same pipeline, and the native default is
+           <i>think-always, then generate</i> — a configuration our measurements show is the <b>worst possible
+           setting</b> for agentic steps.</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag violet">The substrate</span>
+        <h4>Qwen3.5-4B — small, multimodal, hybrid</h4>
+        <p>A 4B-parameter open model mixing standard attention with <b>Gated DeltaNet</b> linear-attention layers,
+           with a native "thinking" mode. Small enough to run on one consumer GPU (RTX 5070 Ti, ≤9.6 GB),
+           which makes per-step latency a first-class measurement — and makes the "does routing beat
+           raw scale?" question honest: the comparison is always the model <b>against itself</b>.</p>
+      </div>
+    </div>
+    <h3>The three regimes, as measurable mechanisms</h3>
+    <div class="grid3">
+      <div class="card reveal"><span class="tag cyan">DECIDE</span><h4>Read, don't generate</h4>
+        <p>Score a bounded candidate set directly from logits — first-token reads (D1) or teacher-forced
+        sequence log-likelihoods (D2). <b>Zero decode steps.</b> Output is the choice itself, with a real
+        probability distribution attached.</p></div>
+      <div class="card reveal"><span class="tag amber">THINK</span><h4>Spend tokens only where they pay</h4>
+        <p>Ordinary autoregressive generation with the native thinking mode. Phase 2's filler-control showed
+        thought <i>continuity</i> adds nothing (−6.5 pts); what pays is <b>computation-shaped subtasks</b>
+        (arithmetic, value entry).</p></div>
+      <div class="card reveal"><span class="tag green">GATE</span><h4>Calibrated confidence routing</h4>
+        <p>Temperature-scaled decision confidence, fitted per domain on held-out calibration data, decides
+        when to escalate. Escalation exchanges <b>information</b> (re-read richer context), not reasoning.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GOAL ================= -->
+<section id="goal">
+  <div class="wrap">
+    <div class="kicker">Goal</div>
+    <h2>The question this PoC answers</h2>
+    <div class="callout win reveal" style="font-size:1.02rem">
+      “Can this PoC be <b>better — speed <i>and</i> accuracy — at computer or browser use, compared to vanilla
+      Qwen 4B</b> — not aiming to compete with frontier models?”
+    </div>
+    <p>That ambition was decomposed into three measured gates, each with a preregistered success criterion:</p>
+    <div class="grid3">
+      <div class="card reveal"><span class="tag cyan">Gate A · MCQ (S8/Q12)</span>
+        <p>Can a gated decide/think hybrid beat <b>all four</b> vanilla baselines (never-think, no-think,
+        think-always, naive hybrid) on 500 mixed-domain questions at <b>equal or better latency</b>?</p></div>
+      <div class="card reveal"><span class="tag violet">Gate B · Browser replay</span>
+        <p>Does the mechanism transfer to web-agent steps — element selection on 1,801 replayed
+        <b>Mind2Web</b> actions — against the same model's vanilla configs?</p></div>
+      <div class="card reveal"><span class="tag green">Gate C · Tool calls</span>
+        <p>Can the full user architecture — <b>decide the tool → think the value → structured output</b> —
+        beat one-shot generation on complete, schema-valid actions?</p></div>
+    </div>
+    <ul class="plain">
+      <li><b>Fairness rules:</b> identical prompts and gates across arms, calibration on a disjoint split, matched-gate comparisons, per-item McNemar tests, per-item checkpointed runs.</li>
+      <li><b>Non-goal:</b> frontier accuracy. The claim is strictly <i>this model, routed, vs this model, vanilla</i>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= APPROACH ================= -->
+<section id="approach">
+  <div class="wrap">
+    <div class="kicker">Approach</div>
+    <h2>One backbone, three output contracts, calibrated gates</h2>
+
+    <div class="callout reveal" style="font-size:1.02rem">
+      <b>What we did to the weights: nothing.</b> The released Qwen3.5-4B checkpoint is loaded frozen
+      (bf16, off-the-shelf) — no fine-tuning, no LoRA or adapters, no merged weights, no new special
+      tokens, no training of any kind. Everything in this PoC is an <b>inference-time layer</b> wrapped
+      around that frozen checkpoint: extra <i>forward passes</i> that read logits instead of generating
+      (D1/D2 — zero decode steps), one line of prompt engineering (the format anchor), curve-fitted
+      calibration (temperature scaling + acceptance thresholds fit on a held-out split — statistics, not
+      gradient descent), and a deterministic control policy that decides when to escalate and how a turn
+      assembles into a choice, a tool call, or text. Even THINK is the model's own native thinking mode —
+      no distilled or SFT-trained traces. Consequently every comparison in this report is
+      <b>the same checkpoint against itself</b> under different runtime policies; nothing here can be
+      attributed to weight changes.
+    </div>
+
+    <h3 style="margin-top:8px">The decision reads</h3>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag cyan">D1 · first-token read</span>
+        <p>Restrict logits to the candidates' first tokens — one forward pass, pure classification.
+        Powers the fastest REFLEX-style routing.</p></div>
+      <div class="card reveal"><span class="tag cyan">D2 · sequence scoring</span>
+        <p>Teacher-force each candidate, score its sequence log-likelihood (α-normalized), softmax across
+        candidates. Still <b>zero decode steps</b>; robust for multi-token candidates like web element lines.</p></div>
+    </div>
+    <ul class="plain">
+      <li><b>Format anchor:</b> a one-line format instruction lifts usable pre-mask probability mass from <span class="mono">0.016 → 0.912</span> — without it, the reads are unmeasurable.</li>
+      <li><b>Pre-mask validity:</b> if the candidate set captures too little raw mass, the read is invalid — escalate rather than trust.</li>
+      <li><b>Calibration:</b> confidence is temperature-scaled; the acceptance threshold is <i>fitted</i> per domain (ECE-minimising temperature, coverage/accuracy curve) — never assumed.</li>
+    </ul>
+
+    <h3>The web factorization (transplant to browser use)</h3>
+    <div class="flow reveal">
+      <div class="fstep"><div class="t" style="color:var(--cyan)">1 · DECIDE op</div><div class="d">3-way read: CLICK / TYPE / SELECT — a cheap prior over the action type</div></div>
+      <span class="farrow">→</span>
+      <div class="fstep"><div class="t" style="color:var(--cyan)">2 · DECIDE element</div><div class="d">score ~20 candidate element lines, <i>conditioned on the op</i>; confidence-gated</div></div>
+      <span class="farrow">→</span>
+      <div class="fstep"><div class="t" style="color:var(--violet)">3 · escalate if unsure</div><div class="d">re-read the top-3 with subtree & section context — information, not reasoning</div></div>
+      <span class="farrow">→</span>
+      <div class="fstep"><div class="t" style="color:var(--green)">4 · THINK value</div><div class="d">for TYPE/SELECT only: ~24 tokens generate the argument</div></div>
+      <span class="farrow">→</span>
+      <div class="fstep"><div class="t" style="color:var(--green)">5 · ASSEMBLE call</div><div class="d">{op, element, value} — schema-valid by construction (constrained decode in the live runtime)</div></div>
+    </div>
+
+    <h3>The mode router — the end-state runtime</h3>
+    <p>Mode selection is a <b>harness-level decision based on affordances</b>, deliberately not a learned router:
+       the measured routing signal (margin AUC 0.699 on web) is strong enough to gate escalation
+       <i>inside</i> a mode, not to pick between modes. Supplying a candidate set <i>is</i> choosing DECIDE mode.</p>
+    <div class="flow reveal">
+      <div class="fstep"><div class="t" style="color:var(--cyan)">Candidate set offered</div><div class="d">yes/no dialogs, confirmations, element picks → <b>pure decision, zero generation</b></div></div>
+      <span class="farrow">·</span>
+      <div class="fstep"><div class="t" style="color:var(--violet)">Tool schema offered</div><div class="d">browser actions → <b>decide → think → structured tool call</b></div></div>
+      <span class="farrow">·</span>
+      <div class="fstep"><div class="t" style="color:var(--green)">Open question</div><div class="d">final answers → <b>text generation</b>, thinking gated by task shape</div></div>
+    </div>
+    <p>Every turn returns the output plus an auditable event trail (stage, selection, confidence, latency) —
+       the open-weights counterpart of a server-side "auto" router, implemented in <code>hybrid/router.py</code>.</p>
+
+    <h3>The stack underneath — what was touched, what wasn't</h3>
+    <p>"Harness" is the layer Claude Code or opencode occupies: the loop that observes the environment, decides
+       what the model is <i>offered</i> this turn, executes the answer, and verifies it. Placed on the full stack,
+       this PoC's entire effect lives in the two thin layers at the top — everything below them is the released
+       model and stock inference, untouched.</p>
+    <div class="stack reveal">
+      <div class="slayer new">
+        <div class="sbody">
+          <div class="sname">Agent harness <span class="sanalogy">≈ the Claude Code / opencode loop</span></div>
+          <div class="sdesc">Observe (live DOM / screenshot) → declare what the model is offered this turn → execute
+            the answer against the environment → verify → recover. Here: <code>eval/livedemo.py</code>,
+            <code>eval/webreplay.py</code>. <b>Mode selection lives here</b> — offering a candidate set
+            <i>is</i> choosing DECIDE.</div>
+        </div>
+        <div class="schip new">new · thin, task-specific</div>
+      </div>
+      <div class="slayer new hot">
+        <div class="sbody">
+          <div class="sname">Mode router + decision reads <span class="sanalogy">hybrid/ — the open-weights "auto" router</span></div>
+          <div class="sdesc">Three-mode dispatch (DECIDE / TOOL_CALL / TEXT) · D1/D2 logits reads · batched
+            shared-prefix scoring · pre-mask validity · fitted escalation gates · per-stage auditable events
+            (<code>router.py</code>, <code>decide.py</code>, <code>scoring/</code>).</div>
+        </div>
+        <div class="schip new">new — the PoC's core</div>
+      </div>
+      <div class="sdiv">everything below is stock</div>
+      <div class="slayer">
+        <div class="sbody">
+          <div class="sname">Inference API <span class="sanalogy">transformers 5.17 · torch 2.11 (CUDA)</span></div>
+          <div class="sdesc">Stock <code>forward()</code> logits and <code>generate()</code> — <b>used differently,
+            never modified</b>. This is the hard boundary: decision reads need logits access, which closed chat
+            APIs don't expose — D2 is inexpressible there.</div>
+        </div>
+        <div class="schip ok">untouched</div>
+      </div>
+      <div class="slayer">
+        <div class="sbody">
+          <div class="sname">Tokenizer / chat template <span class="sanalogy">native</span></div>
+          <div class="sdesc">Used via API as released; <span class="mono">enable_thinking=False</span> pins the
+            no-think reads, and the format anchor is one prompt line.</div>
+        </div>
+        <div class="schip ok">untouched</div>
+      </div>
+      <div class="slayer">
+        <div class="sbody">
+          <div class="sname">Model weights <span class="sanalogy">Qwen3.5-4B · bf16 · frozen</span></div>
+          <div class="sdesc">No fine-tuning, no LoRA, no merged weights, no new tokens. Every comparison in this
+            report is <b>the same checkpoint against itself</b>.</div>
+        </div>
+        <div class="schip ok">untouched · frozen</div>
+      </div>
+      <div class="slayer">
+        <div class="sbody">
+          <div class="sname">Environment <span class="sanalogy">Chromium (playwright) / Mind2Web replay</span></div>
+          <div class="sdesc">Driven directly by the harness; the model never sees raw HTML — only the harness's
+            rendered candidate contract.</div>
+        </div>
+        <div class="schip ok">untouched</div>
+      </div>
+    </div>
+    <p class="foot" style="margin-top:2px">Read top-down: each layer calls the one below it. In a production agent,
+       row 1 is Claude Code / opencode's loop, and row 2 is what adopting this runtime would add to it; row 3 is
+       why the method cannot be replicated behind a closed API.</p>
+
+    <h3>One turn through the layers — who initiates what</h3>
+    <p>The same architecture, seen dynamically. Every crossing is a <b>harness-initiated call</b>; the model
+       never starts a turn, never picks its output contract, and never emits a tool call.</p>
+    <div class="seq reveal">
+      <div class="seq-col hv">
+        <div class="seq-head hv">Agent harness · the Claude Code / opencode loop</div>
+        <div class="seq-step"><span class="n">1</span><span class="t">Observe</span> — read the live DOM /
+          screenshot; render the candidate contract (numbered element lines + context). The model never sees
+          raw HTML.</div>
+        <div class="seq-step"><span class="n">2</span><span class="t">Declare the affordance</span> — candidate
+          set → DECIDE · tool schema → TOOL_CALL · open question → TEXT. <b>Mode selection happens here</b>:
+          deterministic, free, correct by construction — even a perfect model-side router loses to it
+          (−2.8 pts, tab 4).</div>
+        <div class="seq-step"><span class="n">6</span><span class="t">Execute + verify</span> — perform the
+          action in the environment, verify against the expected effect, record and recover on a miss.</div>
+      </div>
+      <div class="seq-col hc">
+        <div class="seq-head hc">Mode router + decision reads · hybrid/router.py</div>
+        <div class="seq-step"><span class="n">3</span><span class="t">Route on the affordance</span> — pick the
+          mechanism and attach the domain-fitted gate. Never asked of the model (measured: d2_over_modes
+          −4.7 pts, routes below the constant).</div>
+        <div class="seq-step"><span class="n">4</span><span class="t">Read → gate → escalate</span> — batched D2
+          logits read over the candidates (zero decode steps) → choice + calibrated confidence.
+          <span class="cond">Unsure?</span> escalate <i>inside</i> the mode: rich re-read, op re-read with the
+          element in view, or beam-over-ops arbitration. Every stage emits an auditable event.</div>
+        <div class="seq-step"><span class="n">5</span><span class="t">Assemble + return</span> — TOOL_CALL: think
+          the value (~24 tokens, TYPE/SELECT only) → {tool, target, value}, schema-valid by construction.
+          Answer + probability + event trail → harness.</div>
+      </div>
+      <div class="seq-col hd">
+        <div class="seq-head">Model · stock forward passes (untouched)</div>
+        <div class="seq-step"><span class="callby">called by 4 · every read</span><span class="t">Forward pass →
+          logits</span> — one pinned-prompt prefill + batched candidate scoring. No decode steps on picks.</div>
+        <div class="seq-step"><span class="callby">called by 5 · values / text only</span><span class="t">Generate</span> —
+          ~24 tokens for TYPE/SELECT values; full generation only in TEXT mode. The model never emits a
+          tool call.</div>
+      </div>
+    </div>
+    <div class="seq-xing reveal">
+      <span><b>harness → router</b> affordance + rendered context</span>
+      <span><b>router → model</b> pinned prompt (forward pass)</span>
+      <span><b>model → router</b> logits → choice + probability</span>
+      <span><b>router → harness</b> answer + events</span>
+      <span><b>harness → environment</b> action → verified effect</span>
+    </div>
+
+    <div class="grid2" style="margin-top:18px">
+      <div class="card reveal"><span class="tag amber">The alternative, visualized</span><h4>If DECIDE were a
+        model-invoked tool</h4>
+        <p>harness offers tools → <b>model generates the call</b> (re-emits the candidates it was just given,
+        full decode) → harness parses (can fail: 79% on native one-shot JSON) → execute. And the model picks
+        the mechanism itself — measured 0.834, below the always-DECIDE constant. Three costs the reads were
+        built to remove: latency, transcription, parse failures.</p></div>
+      <div class="card reveal"><span class="tag cyan">This runtime</span><h4>What happens instead</h4>
+        <p>harness declares the affordance → router picks the mechanism → logits read (+ value tokens only
+        where the contract needs them) → harness executes and verifies. Zero decode on picks, a probability
+        and validity check attached to every read, schema-valid by construction — indistinguishable from a
+        tool call to the environment, with no generation of one anywhere.</p></div>
+    </div>
+
+    <h3 style="margin-top:26px">Vanilla harness vs this PoC — the same model, two loops</h3>
+    <div class="seq reveal" style="grid-template-columns:1fr 1fr">
+      <div class="seq-col" style="border:1px solid #f8717133;border-radius:14px;padding:14px">
+        <div class="seq-head" style="color:var(--red);border-color:#f8717155;background:#f871710d">Vanilla harness · any agent loop + the model's default</div>
+        <div class="seq-step"><span class="n" style="background:var(--red)">1</span><span class="t">Observe → prompt</span> —
+          assemble the prompt (+ tool list); one pipeline for every step.</div>
+        <div class="seq-step"><span class="n" style="background:var(--red)">2</span><span class="t">Model generates
+          everything</span> — thinking, the choice, the tool call: all of it generated text. Native default is
+          think-always (27.4 s/step); the no-think shortcut can't type or select (CLICK on 896/900).</div>
+        <div class="seq-step"><span class="n" style="background:var(--red)">3</span><span class="t">Parse →
+          execute</span> — parse failures possible (79% on native one-shot JSON); no calibrated confidence,
+          no escalation — a wrong answer just happens.</div>
+        <div class="seq-step" style="margin-bottom:0"><span class="t" style="color:var(--red)">One mechanism for every step: generate.</span></div>
+      </div>
+      <div class="seq-col hc" style="border:1px solid #22d3ee44;border-radius:14px;padding:14px">
+        <div class="seq-head hc">This PoC · same frozen checkpoint, routed runtime</div>
+        <div class="seq-step"><span class="n">1</span><span class="t">Observe → render + declare</span> — render the
+          candidate contract and declare the affordance; mode selection is deterministic and free.</div>
+        <div class="seq-step"><span class="n">2</span><span class="t">Mechanism per affordance</span> — logits read
+          for choices (0 decode steps, probability attached) · decide→decide→re-read→think chain for tool
+          calls · generation only for open questions.</div>
+        <div class="seq-step"><span class="n">3</span><span class="t">Gate → escalate → verify</span> — pre-mask
+          validity + calibrated confidence gate; escalation exchanges information inside the mode; every
+          stage emits an auditable event; harness verifies the action's effect.</div>
+        <div class="seq-step" style="margin-bottom:0"><span class="t" style="color:var(--cyan)">A mechanism per affordance: decide · chain · text.</span></div>
+      </div>
+    </div>
+
+    <div class="tblwrap wrap-cells reveal" style="margin-top:16px"><table>
+      <thead><tr><th>Per-turn aspect</th><th>Vanilla (same model)</th><th>This PoC</th><th>Measured</th></tr></thead>
+      <tbody>
+        <tr><td>Answer mechanism</td><td>always generate (think → write)</td><td>read from logits / factored chain, per affordance</td><td class="mono">MCQ 0.490 → 0.856 · web 0.115 → 0.356</td></tr>
+        <tr><td>Mode selection</td><td>implicit — the model's prior (think-then-prose)</td><td>harness-declared affordance</td><td class="mono">oracle model-router −2.8 pts</td></tr>
+        <tr><td>Choice among options</td><td>generated prose/JSON → parse</td><td>teacher-forced logits over candidates</td><td class="mono">0 decode · 0.34 s vs 27.4 s</td></tr>
+        <tr><td>Structured tool call</td><td>model writes JSON: 79% parse fail (native) / CLICK-only (no-think)</td><td>decide → decide → re-read → think value, assembled</td><td class="mono">0 parse fails · 0.320 vs 0.274 (p=0.0033)</td></tr>
+        <tr><td>Uncertainty handling</td><td>none intrinsic</td><td>pre-mask validity + calibrated gate → escalate in-mode</td><td class="mono">tail 0.200 → 0.241 · 0.398 vs 0.244</td></tr>
+        <tr><td>Auditability</td><td>the generation itself (post-hoc)</td><td>per-stage events: stage, selection, confidence, latency</td><td class="mono">every step auditable</td></tr>
+        <tr><td>Untouched</td><td>—</td><td>weights · tokenizer · transformers API · tool interface · env loop</td><td class="mono">same frozen bf16 checkpoint</td></tr>
+      </tbody>
+    </table></div>
+    <p class="foot">Vanilla rows are this model's measured configurations (think-always G_web / one-shot JSON G3/C3,
+      no-think C_web); PoC rows are the routed runtime under the same harness-style loop — the loop skeleton
+      (observe → prompt → execute → verify) is unchanged; only how the model is invoked per step differs.</p>
+  </div>
+</section>
+
+<!-- ================= WORK DONE ================= -->
+<section id="work">
+  <div class="wrap">
+    <div class="kicker">What was done</div>
+    <h2>Three phases, every step measured</h2>
+    <div class="timeline">
+      <div class="titem reveal"><span class="tphase">Phase 0 · Infrastructure</span>
+        <h4>Runtime harness + the mode-probing baseline</h4>
+        <p>uv-managed Python 3.12, torch 2.11 (CUDA sm_120), per-item checkpointed eval runners. Probed the
+        model's native modes and found the open checkpoint has <b>no mode routing at all</b> — the gap this
+        runtime fills.</p></div>
+      <div class="titem reveal"><span class="tphase">Phase 1 · The read mechanism</span>
+        <h4>Making logits measurable</h4>
+        <p>First-token reads are dominated by formatting noise until the format anchor — pre-mask mass
+        0.016 → 0.912. D2 sequence scoring built and validated against D1. All later results stand on this.</p></div>
+      <div class="titem reveal"><span class="tphase">Phase 2 · Escalation mechanisms</span>
+        <h4>What escalation should actually do — including a kill</h4>
+        <p>Preregistered kill criterion fired: <b>think→re-decide's win is a policy win</b> (a second read at a
+        changed position), not thought continuity — a filler-thought control cost −6.5 points. Pivoted the
+        escalation design to confidence-gated mode switching.</p></div>
+      <div class="titem reveal"><span class="tphase">Phase 3 · Headline S8/Q12 · n=500</span>
+        <h4>The hybrid beats every vanilla arm — SURVIVED</h4>
+        <p>H-redecide <span class="mono">0.856 @ 0.26 s</span> vs no-think 0.764 (McNemar 62/16, p≈3×10⁻⁷) and
+        think-always 0.490 @ 17.3 s. Thinking retained only where it pays: pure accuracy on computation-heavy
+        items still belongs to think-always (0.790 vs 0.660).</p></div>
+      <div class="titem v reveal"><span class="tphase">Browser phase · Gate B v1</span>
+        <h4>Dataset build + first transplant: decide wins, MCQ hybrid fails</h4>
+        <p>Built a Mind2Web replay harness (1,801 steps; element sets capped at 20; DOM-path + parent-text
+        rendering after the first candidate representation collapsed both arms to ~0.20). Result: decide
+        0.320 vs vanilla 0.258 (p≈4×10⁻⁵) and vs think-always 0.115 (p≈6×10⁻¹¹) — but the MCQ hybrid's
+        think→re-decide escalation was <b>harmful on web</b> (tail 0.188 vs 0.271); aborted honestly at n=78.</p></div>
+      <div class="titem v reveal"><span class="tphase">Browser phase · Gate B v2</span>
+        <h4>Web-specific redesign: op-first, rich re-read, fitted gate</h4>
+        <p>Op-first read conditions the element read; escalation swapped to a <b>rich re-read</b> of the top-3
+        with subtree/section context (zero think tokens); gate fitted on a calibration split (margin AUC 0.699).
+        Escalation flipped from harmful to safe (+4.1 pts on the tail); gate separates 0.398 accepted vs 0.244
+        tail; decide vs vanilla p≈1.1×10⁻⁷.</p></div>
+      <div class="titem v reveal"><span class="tphase">Browser phase · Gate B v3</span>
+        <h4>The tool-call chain, measured end-to-end</h4>
+        <p>Chain (decide op → gated decide element → op re-read with options → think value → assembled call)
+        vs one-shot JSON generation. First chain build <b>lost</b> (action 0.204) — the op stage saw less than
+        the vanilla prompt; giving it the same context (op 0.507 → 0.843) flipped the result to a significant
+        win (0.320 vs 0.274, p=0.0033). One-shot no-think JSON proved degenerate: CLICK on 896/900 steps.
+        Mode router implemented and self-tested.</p></div>
+      <div class="titem v reveal"><span class="tphase">Browser phase · L1 · batched scoring</span>
+        <h4>One prefix prefill, parity-gated, 5× faster</h4>
+        <p>Collapsed ~20 sequential prefills into one shared-prefix prefill + tiled batched continuation
+        scoring. A three-condition probe picks the cache strategy (crop-rewind is bit-lossy on Gated DeltaNet,
+        so tile-and-batch wins); the parity gate passes: <b>0/50 argmax flips, pre-mask delta exactly 0,
+        negative control separated 11×</b>. Both web arms re-run batched: accuracy statistically identical
+        (≥97.6% per-step agreement), p50 <b>1.70 s → 0.34 s</b>.</p></div>
+      <div class="titem v reveal"><span class="tphase">Browser phase · L2 live demo + L3 multimodal</span>
+        <h4>The runtime, live in a real browser</h4>
+        <p>Six-step trajectory on a staged site with live-DOM extraction — DECIDE (navigation; a pure
+        2-candidate dialog decision at <b>0.11 s</b>), TOOL_CALL (op → gated target → op re-read → think value →
+        executed), TEXT (accurate order summary). First runs scored 4/5; the tool-call miss was diagnosed live —
+        the op read is a genuine three-way near-tie and committing to one op loses the correct branch — and
+        fixed with a <b>beam-over-ops chain</b> (targets scored under every op, element-conditioned re-read
+        arbitrating a log-linear product): <b>5/5</b>, every action verified against its gold effect in-page.
+        Along the way: root-caused and fixed a <b>transformers generate() → stale rope_deltas poisoning</b>
+        that crashed the next cached scoring forward. S7: screenshot-conditioned decide reads
+        score <b>0.960 = text-DOM 0.960</b> — the machinery is multimodal-ready.</p></div>
+    </div>
+    <div class="callout note reveal">
+      <b>What broke along the way (and was fixed in the open):</b> a stale-checkpoint confound in the first
+      headline run (caught by comparing first-decision confidences across arms; re-run clean) ·
+      causal-conv1d wheel ABI-incompatible with torch 2.11 (reference conv path) · prompt double-rendering of
+      candidate lines · vanilla arms that never emitted the operation (unparseable op metric) · and the two
+      scientific negatives above, kept as measured results.
+    </div>
+  </div>
+</section>
+
+<!-- ================= RESULTS ================= -->
+<section id="results">
+  <div class="wrap">
+    <div class="kicker">Results</div>
+    <h2>All of it, on the table</h2>
+    <div class="tabs">
+      <button class="tab active" data-tab="t_mcq">1 · MCQ headline</button>
+      <button class="tab" data-tab="t_web">2 · Element selection</button>
+      <button class="tab" data-tab="t_tool">3 · Tool-call chain</button>
+      <button class="tab" data-tab="t_gate">4 · Gate & router</button>
+      <button class="tab" data-tab="t_gen">5 · Generalization</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="panel active" id="t_mcq">
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Arm · MCQ n=500</th><th>Accuracy</th><th>p50 latency</th><th>Escalation</th><th>vs C (no-think)</th></tr></thead>
+        <tbody>
+          <tr><td>A · never-think (raw logits)</td><td class="mono worst">0.308</td><td class="mono">0.26 s</td><td>—</td><td>—</td></tr>
+          <tr><td>C · no-think generation</td><td class="mono">0.764</td><td class="mono">0.29 s</td><td>—</td><td>—</td></tr>
+          <tr><td>G · think-always <span style="color:var(--dim)">(native default)</span></td><td class="mono worst">0.490</td><td class="mono">17.29 s</td><td>—</td><td>worse, 60× slower</td></tr>
+          <tr><td>H · hybrid, escalate→generate</td><td class="mono">0.786</td><td class="mono">0.25 s</td><td>18%</td><td>n.s. (48/37)</td></tr>
+          <tr class="hl"><td><b>H · hybrid, escalate→re-decide</b></td><td class="mono best">0.856</td><td class="mono best">0.26 s</td><td>18%</td><td class="best">χ²=26.0, p≈3×10⁻⁷ (62/16)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="bars" id="bars_mcq"></div>
+      <div class="legend"><span class="lg-cyan">decide-based</span><span class="lg-violet">hybrid (gated)</span><span class="lg-coral">vanilla generation</span></div>
+      <ul class="plain">
+        <li>Fast path (accepted by the gate, 82% of items): <span class="mono best">0.882 @ 0.26 s</span>. Escalated tail: re-decide 0.739 vs generate 0.359 — the second read is what rescues hard items.</li>
+        <li><b>Where thinking still wins:</b> pure accuracy on computation-heavy items (arith-hard) belongs to think-always — 0.790 vs the hybrid's 0.660. The router sends computation-shaped subtasks to THINK; it never claims thinking is useless.</li>
+        <li>Mechanism attribution (filler control): the win comes from the <b>second read at a changed position</b>, not from thought continuity (−6.5 pts with filler thinking).</li>
+      </ul>
+    </div>
+
+    <!-- TAB 2: WEB -->
+    <div class="panel" id="t_web">
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Arm · web replay, test n=900</th><th>Element acc</th><th>Op acc</th><th>p50</th><th>Escalation</th><th>vs C_web</th></tr></thead>
+        <tbody>
+          <tr><td>G_web · think-always <span style="color:var(--dim)">(native default)</span></td><td class="mono worst">0.115</td><td class="mono">0.840</td><td class="mono worst">27.4 s</td><td>—</td><td>— (n=200)</td></tr>
+          <tr><td>C_web · no-think generation</td><td class="mono">0.258</td><td class="mono">0.816</td><td class="mono best">0.26 s</td><td>—</td><td>—</td></tr>
+          <tr><td>D2E · decide over elements (v1)</td><td class="mono">0.320</td><td class="mono">0.490</td><td class="mono">1.60 s</td><td>—</td><td class="best">p≈4×10⁻⁵ (118/62)</td></tr>
+          <tr><td>D2E2 · op-first → op-conditioned (v2)</td><td class="mono">0.344</td><td class="mono">0.256</td><td class="mono">1.70 s</td><td>—</td><td class="best">p≈1.1×10⁻⁷ (144/66)</td></tr>
+          <tr><td>H2 · gated + rich re-read (v2)</td><td class="mono">0.356</td><td class="mono">0.256</td><td class="mono">1.77 s</td><td>27%</td><td class="best">p≈8×10⁻⁹ (158/70)</td></tr>
+          <tr><td>D2E2 · <b>batched</b> (L1)</td><td class="mono">0.348</td><td class="mono">0.256</td><td class="mono best">0.34 s</td><td>—</td><td>98.3% agreement</td></tr>
+          <tr class="hl"><td><b>H2 · batched (L1)</b></td><td class="mono best">0.353</td><td class="mono">0.256</td><td class="mono best">0.37 s</td><td>27%</td><td>97.6% agreement</td></tr>
+        </tbody>
+      </table></div>
+      <div class="bars" id="bars_web"></div>
+      <div class="legend"><span class="lg-cyan">decide-based</span><span class="lg-violet">hybrid (gated)</span><span class="lg-coral">vanilla generation</span></div>
+      <div class="callout win reveal"><b>Escalation sign flipped by design, not luck.</b> v1's think→re-decide
+        <i>dropped</i> the low-confidence tail to 0.188 (plain decide: 0.271) — reasoning hurts perception-selection
+        steps. v2's rich re-read (more page context, zero think tokens) <i>lifted</i> the tail 0.200 → 0.241.
+        Information escalation &gt; reasoning escalation.</div>
+      <div class="callout note reveal"><b>The op-first cost, diagnosed:</b> deciding the operation before seeing any
+        element predicts SELECT for 61% of gold-CLICK steps (op acc 0.490 → 0.256). Element identity is the
+        strongest operation signal — fixed in v3 by re-reading the op with the options in view (see tab 3).</div>
+      <div class="callout win reveal"><b>Latency closed by batched scoring, gated by parity.</b> One shared
+        prefix prefill + tiled batched continuation scoring replaces ~20 sequential prefills. A three-condition
+        probe picks the cache strategy per architecture (crop-rewind is bit-lossy on Gated DeltaNet → tile the
+        cache and right-pad continuations); the gate demands bit-level premask parity, ≤ noise-floor raw deltas,
+        and a 11× separated negative control before any latency number counts. Measured: <b>p50 1.70 → 0.34 s
+        (5×)</b> at statistically identical accuracy — every per-step disagreement sits inside the measured
+        bf16 near-tie band (top-2 gap ≤ 0.05). Decide mode now runs within ~1.3× of vanilla no-think latency
+        while keeping the accuracy win.</div>
+      <p class="foot">Sequential table rows kept for provenance; records: <code>webreplay_records.jsonl</code>
+      (sequential) and <code>webreplay_records_batched.jsonl</code> (batched), same 900 test steps.</p>
+    </div>
+
+    <!-- TAB 3: TOOL CALL -->
+    <div class="panel" id="t_tool">
+      <p style="margin-top:14px">The full user architecture: <b>DECIDE the tool → THINK the value → structured
+      tool-call output</b>, scored on complete actions (op ∧ element ∧ value-exact). Mind2Web maps 1:1:
+      operation = tool, element = target, value = argument.</p>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Arm · n=900</th><th>Action acc</th><th>Element</th><th>Op</th><th>Value (exact)</th><th>Parse fails</th><th>p50</th></tr></thead>
+        <tbody>
+          <tr><td>G3 · one-shot think-always JSON <span style="color:var(--dim)">(native default)</span></td><td class="mono worst">0.100</td><td class="mono worst">0.100</td><td class="mono worst">0.180</td><td>—</td><td class="mono worst">158 / 200</td><td class="mono worst">31.3 s</td></tr>
+          <tr><td>C3 · one-shot no-think JSON</td><td class="mono">0.274</td><td class="mono">0.303</td><td class="mono">0.844*</td><td>never engages (n=2)</td><td class="mono best">0</td><td class="mono best">0.75 s</td></tr>
+          <tr><td>H3 · chain, narrow-context op read</td><td class="mono">0.204</td><td class="mono">0.356</td><td class="mono">0.507</td><td class="mono">0.346 (n=26)</td><td class="mono best">0</td><td class="mono">1.92 s</td></tr>
+          <tr class="hl"><td><b>H3B · chain, options-context op read</b></td><td class="mono best">0.320</td><td class="mono best">0.356</td><td class="mono best">0.843</td><td class="mono best">0.600 (n=30)</td><td class="mono best">0</td><td class="mono">2.09 s</td></tr>
+        </tbody>
+      </table></div>
+      <div class="bars" id="bars_tool"></div>
+      <div style="display:flex;gap:8px;margin:4px 0 6px" id="tool_toggle">
+        <button class="tab active" data-metric="action">Full action</button>
+        <button class="tab" data-metric="elem">Element only</button>
+      </div>
+      <div class="legend"><span class="lg-violet">decide→think chain</span><span class="lg-coral">one-shot JSON</span><span class="lg-red">native default</span></div>
+      <div class="callout win reveal"><b>Lesson 1 — context parity.</b> The first chain (H3) <i>lost</i> to one-shot
+        generation (0.204 vs 0.274): its op stage saw only the chosen element, while the vanilla prompt saw all
+        element lines. Giving the op re-read the same options lifted op 0.507 → 0.843 (statistically identical to
+        vanilla's 0.844) and flipped the comparison to a significant chain win (p=0.0033). <b>A factored chain
+        must pay back the context it factorizes away.</b></div>
+      <div class="callout fail reveal"><b>Lesson 2 — the degenerate baseline.</b> One-shot no-think JSON predicts
+        CLICK on 896/900 steps — it never types or selects, so its value stage engages on 2/900 items and its
+        0.844 op accuracy is just the CLICK base rate. It <i>looks</i> competitive on CLICK-heavy joint metrics
+        while being unable to perform 16% of the action space. Always decompose baselines.</div>
+      <ul class="plain">
+        <li>H3B beats think-always JSON by χ²=34.6 (p≈4×10⁻⁹) — the native default is unusable for tool calls (79% unparseable output, 15× slower).</li>
+        <li>The chain ran this stage list sequentially (2.09 s vs C3's 0.75 s); batched scoring — measured at a
+          5× p50 cut on the decide arms with identical accuracy — applies directly to its decide stages, and the
+          live demo's tool-call steps run at 0.46–0.77 s end-to-end with it.</li>
+        <li>Error propagation is real but bounded: op accuracy is 0.938 when the element is right vs 0.791 when wrong.</li>
+      </ul>
+    </div>
+
+    <!-- TAB 4: GATE & ROUTER -->
+    <div class="panel" id="t_gate">
+      <h3 style="margin-top:14px">The calibrated gate: routing signal that survives the domain change</h3>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Quantity</th><th>MCQ</th><th>Web (refit)</th></tr></thead>
+        <tbody>
+          <tr><td>Routing signal</td><td class="mono">confidence (AUC —)</td><td class="mono">margin AUC 0.699 · confidence 0.669 · pre-mask 0.550</td></tr>
+          <tr><td>Gate separation (accepted vs tail)</td><td class="mono">0.882 vs 0.739/0.359</td><td class="mono best">0.398 vs 0.244</td></tr>
+          <tr><td>Escalation mechanism</td><td class="mono">think → re-decide at changed position</td><td class="mono">rich re-read of top-3 (zero think)</td></tr>
+          <tr><td>Escalation effect on tail</td><td class="mono">0.739 vs 0.359 (generate)</td><td class="mono best">0.200 → 0.241</td></tr>
+          <tr><td>Coverage / threshold</td><td class="mono">82% fast path</td><td class="mono">75% accepted (temp 2.0)</td></tr>
+        </tbody>
+      </table></div>
+      <p>The MCQ gate did <b>not</b> transfer raw (confidences compress with 20 similar-length options — the v1
+      hybrid escalated 69% and aborted); refitting on web calibration data recovered a working gate. Gates are
+      domain-fitted, never assumed.</p>
+      <h3>The router: three modes, one loop</h3>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Mode</th><th>Trigger (harness affordance)</th><th>Output</th><th>Decode steps</th><th>Measured</th></tr></thead>
+        <tbody>
+          <tr><td><b style="color:var(--cyan)">DECIDE</b></td><td>candidate set supplied</td><td>the choice + distribution</td><td class="mono best">0</td><td class="mono">0.856 MCQ · 0.356 web</td></tr>
+          <tr><td><b style="color:var(--violet)">TOOL_CALL</b></td><td>tool schema supplied</td><td>{tool, target, value}</td><td class="mono">~24 tokens (values only)</td><td class="mono">0.320 action acc</td></tr>
+          <tr><td><b style="color:var(--green)">TEXT</b></td><td>open question</td><td>free text</td><td class="mono">full generation</td><td class="mono">live demo: accurate order summary</td></tr>
+        </tbody>
+      </table></div>
+      <p>Implemented in <code>hybrid/router.py</code> with per-stage auditable events (decide → gated target →
+      <b>op re-read with the element in view</b> → think value); plumbing self-tested. An opt-in
+      <b>beam-over-ops</b> chain scores the target under every offered tool and lets the element-conditioned
+      re-read arbitrate via a log-linear product of the stage likelihoods — it recovered the live demo's one
+      tool-call miss (an op three-way near-tie) for a 5/5 verified trajectory. This is the open-weights
+      answer to the hosted "auto" router found missing in Phase 0 — and it runs live: <code>eval/livedemo.py</code>
+      wires it to a real browser (5/5 scored steps verified against gold effects in-page).</p>
+
+      <h3 style="margin-top:22px">Beam chain at replay scale — a TYPE specialist, not a general upgrade</h3>
+      <p>The demo's 5/5 motivated the beam; the 900-step replay now measures what it actually buys
+        (both arms batched in the same session, H3B re-run as the same-path baseline). Element accuracy
+        <b>0.389 vs 0.353</b> (+3.6 pts, McNemar p=0.021) — but op accuracy drops 0.842 → 0.786
+        (p≈1e-4), netting to an exact wash on the full action (0.316 vs 0.314, p=1.0) at 2.1× latency
+        (1.08 vs 0.51 s p50). The per-gold-op split is the whole story:</p>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>gold op (n)</th><th>op acc — beam</th><th>op acc — H3B</th><th>element — beam</th><th>element — H3B</th></tr></thead>
+        <tbody>
+          <tr><td>CLICK (760)</td><td class="mono">0.818</td><td class="mono best">0.957</td><td class="mono">0.350</td><td class="mono best">0.363</td></tr>
+          <tr><td>TYPE (111)</td><td class="mono best">0.694</td><td class="mono">0.198</td><td class="mono best">0.667</td><td class="mono">0.216</td></tr>
+          <tr><td>SELECT (29)</td><td class="mono">0.276</td><td class="mono best">0.310</td><td class="mono">0.345</td><td class="mono best">0.621</td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:8px">The beam fixes exactly the failure the demo diagnosed (gold-TYPE steps, where
+        H3B's element read is conditioned on a mispredicted op-first) and taxes the CLICK bulk by flipping
+        correctly-decided ops in the log-linear arbitration. Bonus signal, zero extra reads: when all three
+        op branches converge on the same element (27% of steps), element accuracy is <b>0.529 vs 0.337</b>
+        when they split. Verdict: H3B stays the default chain for full-action accuracy; the beam is the
+        better chain for element-only scoring or TYPE-heavy flows.</p>
+
+      <h3 style="margin-top:22px">Could the reads pick the mode themselves? — measured: no</h3>
+      <p>The natural alternative design: point the same D2 read at three output-contract candidates
+        (DECIDE / TOOL_CALL / TEXT) and route on the argmax, instead of letting the harness declare the
+        affordance. Tested directly on the 900-step replay (gold mode from the gold action: DECIDE iff
+        CLICK, TOOL_CALL iff TYPE/SELECT — deterministic, not fitted; the misroute cost asymmetry is
+        preregistered: a DECIDE route on a value-needing step is a guaranteed action loss, a TOOL_CALL
+        route on a CLICK step only costs latency).</p>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Mode router · test n=900</th><th>Mode acc</th><th>gold TOOL_CALL → DECIDE</th><th>Action acc (simulated)</th><th>Δ</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td><b>Affordance routing · always TOOL_CALL</b> <span style="color:var(--dim)">(status quo)</span></td><td class="mono">—</td><td class="mono best">0/140</td><td class="mono best">0.320</td><td class="mono best">—</td></tr>
+          <tr><td>d2_over_modes · elements in view (147 ms p50)</td><td class="mono worst">0.834</td><td class="mono worst">133/140 (95%)</td><td class="mono">0.273</td><td class="mono worst">−4.7 pts</td></tr>
+          <tr><td>d2_over_modes · task+history only (118 ms p50)</td><td class="mono worst">0.840</td><td class="mono worst">136/140 (97%)</td><td class="mono">0.273</td><td class="mono worst">−4.7 pts</td></tr>
+          <tr><td>mode derived from the chain's op-first read</td><td class="mono worst">0.321</td><td class="mono worst">partial</td><td class="mono">0.297</td><td class="mono worst">−2.3 pts</td></tr>
+          <tr><td>DOM signal: form_present (any input/select candidate)</td><td class="mono">—</td><td class="mono">—</td><td class="mono">0.298</td><td class="mono worst">−2.2 pts</td></tr>
+          <tr><td><b>Perfect mode router (oracle upper bound)</b></td><td class="mono">1.000</td><td class="mono best">0/140</td><td class="mono">0.292</td><td class="mono worst">−2.8 pts</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout fail reveal"><b>The decisive row is the oracle.</b> Even a <i>perfect</i> mode router
+        loses 2.8 points of action accuracy, because DECIDE mode's element read is unconditioned (0.320)
+        while the chain's is op-conditioned (0.356) — <b>declaring the contract is what makes the strong
+        reads possible</b>. The model-read itself routes <i>below the trivial always-DECIDE constant</i>
+        (0.834 vs 0.844): the input's surface form — a selection task — dominates the likelihood, 95% of
+        value-needing steps get routed to the choice contract, ~70% of the reads fail the runtime's own
+        pre-mask validity guard, wrong routes are near-ties (margin p50 0.058 — the contract is not a
+        linguistic property of the input), and TEXT never wins a step. The mechanism is for decisions
+        <i>inside</i> the contract; the contract choice itself is the harness's free, deterministic
+        information.</div>
+      <p class="foot">Batched D2 mode reads; execution simulation splices measured per-item records (H3B chain
+        actions; D2E unconditioned element decides executed as clicks). Full tables and caveats:
+        <code>eval/reports/mode_probe/mode_probe.md</code>, runner <code>eval/mode_probe.py</code>.</p>
+
+      <h3 style="margin-top:22px">Real websites, longer trajectories — and the gate as ask-the-user</h3>
+      <p>The staged-site demo scaled up: <b>5 trajectories over 4 real public sites</b> (books.toscrape,
+        quotes.toscrape, the-internet.herokuapp.com, saucedemo.com), <b>20 model steps</b> (7 DECIDE /
+        13 TOOL_CALL), effect-verified in the live browser, batched throughout. The scenario harness was
+        validated model-free first (an extract-only gold walk, 20/20) — which caught a real extractor bug:
+        deduped elements kept stamped IDs that later candidates could collide with, clicking the wrong
+        element. Results: <b>element 0.850 vs gold spec (0.90 screenshot-adjudicated), effects 0.950,
+        value generation 9/9 exact</b>, p50 0.75 s/step.</p>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>The calibrated gate as an ask-the-user signal — the transfer lesson, again.</b> The
+        replay-fitted threshold (accept&nbsp;conf 0.121) fires <b>0/20</b> on these clean real pages — live
+        confidences sit at 0.31–0.97 (median 0.87) — so the production gate as shipped would never ask and
+        would miss both genuine errors. But the <i>ranking</i> transfers perfectly on this set: the two real
+        misses (a semantic "opened <i>a</i> book, not <i>the first</i> book"; the coherent-wrongness cascade,
+        op CLICK→SELECT) are the run's two <b>lowest</b> confidences (0.305, 0.357). A live operating point
+        of ≈0.4 converts both into user questions at a <b>10% ask rate with ask precision 1.000</b>.
+        n=20 with 2 errors — a signal-quality feasibility result, not a calibration; the reusable part is
+        the method (log the signal once, sweep the threshold offline, no model re-runs).
+      </div>
+
+      <h3 style="margin-top:22px">Holding the harness constant: omp + vanilla vs omp + the decide proxy</h3>
+      <p>The three-arm question: take an off-the-shelf agent harness (oh-my-pi) and a local Qwen3.5-4B,
+        change <b>nothing</b> in the harness — only the OpenAI-compatible base URL — and point it at (A) a
+        vanilla endpoint, (B) the PoC's decide-hybrid proxy, with (C) the PoC's own harness (element 0.850 /
+        0.90 adjudicated, effects 0.950, value 9/9) as the reference. Five real-browser tasks, 600 s each,
+        end states verified from page snapshots — never from model claims. <b>A: 0/5</b> (the vanilla 4B
+        thrashes — a phantom "CSRF token requirement", re-planning in prose, every deadline burned).
+        <b>B: 4/5</b> after hardening the proxy's decide chain v3.2→v3.8.1: quotes login <b>44 s</b>, the-internet
+        login+logout <b>40 s</b>, dropdown select-then-switch <b>14 s</b>, and saucedemo login + price-sort +
+        add-cheapest <b>49 s</b> (the chain sorts, THEN adds the sorted-first "Add to cart" = the $7.99 Onesie;
+        verified in the final snapshot). Each pass is five-to-six auditable chain cells with correct values.
+        Completed to <b>5/5</b> by chain v3.11.17 (below): the one remaining failure (T1, 600 s) died at
+        <b>3/4</b> navigation steps — the fourth ("open the
+        first book's detail page") names no element the chain can match, and the vanilla 4B could not resolve
+        it either in ten minutes of free-form attempts. A new caveat the re-test exposed: runs share the
+        daemon's browser context, so localStorage leaks across runs — T5's badge truthfully read 3 (the
+        Onesie this run plus two leftovers of an earlier run's mis-clicks); adjudication reads which items,
+        not just counts. The two failures of the previous sweep were fixed by the <b>pending-step
+        answer-route override</b>: when the op read says ANSWER but the task still has an unconsumed action
+        phrase, the chain acts on the phrase-matched candidate instead of answering — the override's own
+        first live run then caught three of its own defects at the same grain (comma-crossing phrase blobs,
+        a merged aria marker submitting with an empty password, the sort step matching no combobox), each
+        now a semantic test case against the exact failing page's candidates.</p>
+      <p>The v3.7.5-era numbers for the record: 3/5 — quotes login 44 s, the-internet login+logout 40 s,
+        dropdown select-then-switch 61 s; T5 routed every add-to-cart turn to "answer" (uncalibrated
+        answer-gate), T1 stood down at element-conf 0.342 on the first navigation and observe-looped —
+        both sharply characterized rather than mysterious, which is what made them fixable this round.</p>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>What it took — seven root-caused failures, each fixed structurally, none by prompting.</b>
+        The centerpiece: for three versions every click silently did nothing — the click cell was an
+        <i>uninvoked</i> function expression (<code>(() =&gt; {…})</code> without the trailing <code>()</code>),
+        and <code>evaluate()</code> happily returned the function object while the body never ran. Found by
+        probing the harness's own shared headless browser; typing always worked because only the click
+        template lacked the invocation. Then, each caught live and fixed: an exact-phrase anchor yanking
+        the type pick onto the "Login" link on every turn (guarded to navigation steps); context-slimming
+        that flipped the model into close-and-redo junk (keep the last 3 tool results verbatim); a
+        20-candidate cap that alphabetically hid "Form Authentication" past #20 of ~40 links
+        (task-named candidates displace the tail); FontAwesome glyphs living in the accessibility name but
+        not the DOM text (<code>"\uf090 Login"</code> vs <code>" Login"</code> — match bidirectionally); and a
+        value-thinker that echoed the just-set dropdown option on the "switch to Option 2" step (take the
+        task-named alternative; T4: 8.6-min fail → 61 s pass). Discipline bought with two shipped bugs:
+        semantic tests must eval the <i>exact</i> generated evaluate-string against a DOM stub —
+        <code>node --check</code> cannot catch an uninvoked function. Honest cost: n=5 tasks, n=1 per cell,
+        and the proxy deliberately hands final reports (and several outcomes) back to the 4B's plain
+        generation — the honest shape of "harness unchanged".
+      </div>
+    </div>
+
+    <!-- TAB 5: GENERALIZATION -->
+    <div class="panel" id="t_gen">
+      <h3 style="margin-top:14px">v3.9.0 — one proxy, two domains: the browser chain generalized to coding, zero browser drift</h3>
+      <p>The browser-only decide chain became a <b>domain-general decision core with per-domain adapters</b>.
+        The split is structural, never a model guess: <code>detect_domain()</code> looks at which tools the
+        conversation has actually <i>called</i> (browser tools → browser; bash/read/write/edit/glob/grep →
+        coding), falling back on turn 1 to the same deterministic task-shape regexes the browser chain
+        already used. The coding adapter is the browser skeleton wearing file surfaces: the survey cell is
+        <code>pwd &amp;&amp; ls -la</code> (the open-the-URL analogue) parsed into <code>[fN]</code> file
+        candidates; the pending-step override port walks the task's create/write/run/chmod/fix imperatives
+        in task order, one history entry per phrase, targets from in-window tokens, pronouns
+        (<i>run it</i> → most recent write), or single-task files. Content discipline is
+        <b>template-class only</b> (task-quoted echo strings, the echo/sum templates): everything beyond a
+        template returns None and the turn passes through for the model to author — the chain does the
+        mechanical steps, the model does the thinking. One live defect caught in the first sweep and fixed
+        in place: a one-file directory crashed the element read (DECIDE needs ≥2 candidates — a one-file
+        ls has nothing to disambiguate).</p>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Browser task</th><th>v3.8.1 (pre-generalization)</th><th>v3.9.0 (generalized)</th></tr></thead>
+        <tbody>
+          <tr><td>T4 dropdown</td><td class="mono">✓ 14 s</td><td class="mono best">✓ 12 s — same route: both selects, park, answer</td></tr>
+          <tr><td>T2 quotes</td><td class="mono">✓ 44 s</td><td class="mono best">✓ 44 s — username AND password before submit; login verified</td></tr>
+          <tr><td>T3 internet</td><td class="mono">✓ 40 s</td><td class="mono best">✓ 40 s — submit + log out via override</td></tr>
+          <tr><td>T5 saucedemo</td><td class="mono">✓ 49 s</td><td class="mono best">✓ 48 s — sort→combobox, add→post-sort Onesie (in cart, snapshot-verified)</td></tr>
+          <tr><td>T1 books</td><td class="mono worst">✗ 600 s (3/4)</td><td class="mono worst">✗ 600 s (3/4) — same documented shape, unnamed "first book" target</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Browser verdict: 4/5 replication, no drift</b> — decision-log routes match v3.8.1 task for task
+        and turn for turn; timings match to within 2 s; source diff is exactly 4 hunks with the browser path
+        byte-identical; the 16-case browser suite passes against both sources from one file. Domain detection:
+        10/10 clean across both suites. (The first v3.9.0 sweep showed the same routing with inflated
+        wall-times — root-caused to a second client sending long requests to the same proxy and
+        queueing behind its lock; a clean-proxy rerun reproduces v3.8.1's timings exactly. The client
+        was later identified as the opencode agent inside the local Zed editor (running since Sep 7,
+        pointed at the proxy by its model config) and killed on Sep 20 — the port has been clear since.)</p>
+      <h3>The coding suite, same tasks as the vanilla baseline</h3>
+      <div class="tblwrap reveal"><table>
+        <thead><tr><th>Coding task</th><th>vanilla 4B (baseline)</th><th>decide arm, v3.9.0</th></tr></thead>
+        <tbody>
+          <tr><td>C1 create+chmod+run two scripts, in order</td><td class="mono">✓ 27 s</td><td class="mono best">✓ 10 s — chain drove all 5 steps</td></tr>
+          <tr><td>C2 sum a numbers file</td><td class="mono">✓ 23 s</td><td class="mono best">✓ 6 s — sum template; 4321</td></tr>
+          <tr><td>C3 fix a wrong greeting</td><td class="mono">✓ 33 s</td><td class="mono best">✓ 7 s — template rewrite, then run</td></tr>
+          <tr><td>C4 flip a config constant, run twice</td><td class="mono">✓ 34 s</td><td class="mono best">✓ 25 s — model authored show.py; chain ran both rounds; report in order</td></tr>
+          <tr><td>C5 test-gate: run, fix, rerun until pass</td><td class="mono">✓ 38 s</td><td class="mono best">✓ 27 s — chain ran tests, model fixed the bug, rerun to ALL TESTS PASS</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>5/5</b>, matching the vanilla 5/5 — faster per task because chain cells skip generation. End
+        states verified on disk, never from model claims. The honest headline: short local coding loops
+        never exposed the 4B's thrashing, so the coding chain's win is <b>auditability</b> — every mechanical
+        step it drove is in the decision log with its phrase, target, and cell (10 surveys + 21 pending-step
+        cells; 15 authoring turns passed through) — not a score gain. <b>Browser remains the discriminating
+        domain: 0/5 vanilla vs 5/5 decide (v3.11.17) on identical tasks and harness.</b></p>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Generalization without drift, proven both ways.</b> Source-level: 4 hunks, browser path
+        byte-identical. Semantic-level: the browser suite runs against both sources and passes on both.
+        Live-level: the full 5-task browser sweep replays v3.8.1's routing turn for turn. The pattern that
+        made the browser chain work — survey, op read, pending-step order discipline, template-class
+        content, calibrated stand-down — transferred as a <i>shape</i>; only the surfaces (ls candidates,
+        write/bash cells, file-target phrases) are new code. One new boundary measured: beyond-template
+        authoring stays with the model by design, and the chain correctly stands down on it (C4's show.py,
+        C5's bug fix) instead of guessing.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.10.0 — the universal tier: general beyond the adapters.</b> Routing now picks browser chain,
+        coding adapter, <i>or the Tier-1 floor</i>: everything else (conversation, research, unknown tools)
+        passes through safely but gains the domain-free wins — an audit log on every turn, and a
+        <b>loop brake</b>: three identical tool calls in a row trip a corrective nudge + token cap that
+        interrupts model thrashing in any domain without blocking anything. Verified live: a research loop
+        (3 identical empty searches) was braked and the model answered instead of repeating; conversation
+        routes through in 2.5 s, logged; both adapters pass their smoke tests unchanged. Feasibility recon
+        for quantized backends: the decision "head" turns out to be backbone first-token scoring — no
+        custom GGUF needed, so a llama.cpp port is a scorer re-point, not surgery.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.12.0 — the plumbing for adapters that learn themselves.</b> The loop from the design
+        discussion, config-gated end to end (enabled/disabled by config, builder model included):
+        unrecognized tool families ride the Tier-1 floor while their trajectories are <b>captured</b>;
+        an offline <b>builder</b> step offers them to a configurable model (any OpenAI-compatible
+        endpoint) that fills a constrained JSON spec — phrase→action rules with argument captures,
+        stand-down vocabulary, repeat limits; a <b>validation gate</b> replays the spec against the
+        real captured turns (≥80% action reproduction, zero false fires on report turns, anti-overfit
+        lint: no task nouns, no URLs) and only a passing spec is <b>registered</b>; the proxy
+        <b>hot-loads</b> it and routes matching requests there, standing down to the floor whenever the
+        task goes beyond the spec. The safety posture: a learned adapter is data, not code — the
+        builder model writes only JSON, the interpreter is fixed reviewed code, nothing a model writes
+        is ever executed, and the floor hook cannot take the safety net down.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Backend-swap experiment — llama.cpp + Gemma 4 12B NVFP4: the stronger builder is real.</b>
+        The bigger-model plan (packages A+B) started end to end. Built llama.cpp v0.4.1 from source on the
+        GPU host (no cmake, no sudo → <span style="font-family:monospace">uv tool install cmake</span>,
+        CUDA arch 120) and served FreedomAISVR's Gemma-4-12B NVFP4 GGUF (6.97 GB) on
+        <span style="font-family:monospace">llama-server</span> — 8.5 GB VRAM with a 65k context,
+        <b>85.5 tok/s decode</b>, i.e. the 12B quantized is ~3× faster than the current HF 4B serving
+        path. Tool calling works out of the box (<span style="font-family:monospace">--jinja</span> →
+        OpenAI <span style="font-family:monospace">tool_calls</span>). The decisive findings: Gemma 4
+        <i>thinks by default</i> (empty <span style="font-family:monospace">content</span>, reasoning in
+        a separate channel), <span style="font-family:monospace">enable_thinking=false</span> only
+        pre-fills a closed channel — on hard prompts the model re-opens it and burned a 16k-token budget
+        in a repetition loop — while request-level
+        <span style="font-family:monospace">reasoning_budget_tokens: 0</span> force-closes thought at
+        token one (clean ~200-token JSON answers; combining the two knobs silently breaks enforcement).
+        The decide-arm <b>scorer port is feasible</b>: candidate action tokens visible in top-20 logprobs
+        with clean margins (CLICK −0.285 vs TYPE −1.394) at 44–83 ms warm, two independent paths. And the
+        <b>builder experiment passed its gate where the 4B was held</b>: on the identical 3 captured
+        sessions, Gemma 12B produced a generalizing spec (protocol vocabulary only, no task nouns, no
+        URLs) that replayed <b>4/4 actions with zero false fires</b> — the exact failure the 4B's
+        candidate was rejected for — now registered in an isolated
+        <span style="font-family:monospace">learned_adapters_gemma/</span> registry. Host restored to the
+        standing v3.12.0 proxy afterward, learned-adapter routing re-verified live (adapter-cell, 0.0 s).
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.13.0 — the end-to-end measurement: Gemma 12B on the real harness, native: 0/5 — the chain,
+        not the parameters, is what finishes tasks.</b> "Measure end to end" got its own release: a
+        config-gated <b>remote backend arm</b> (<span style="font-family:monospace">--backend-config</span>,
+        <span style="font-family:monospace">--no-local-model</span>) turns the proxy into a faithful
+        OpenAI shim in front of llama-server — the harness's request forwarded verbatim, the reply mapped
+        back onto the internal triple, keep-alives/error-path/audit shared with the in-process arms, and
+        the shim carries no weights (the 16 GB card holds llama-server <i>or</i> the 4B, not both).
+        Attempt 1 died instructively: on its fourth turn the model fell into an <b>endless generation
+        loop</b> (44k tokens at ~70 tok/s) that held the proxy's lock and starved the harness — fixed with
+        standard sampler knobs in config (<span style="font-family:monospace">repeat_penalty 1.1</span>, a
+        <span style="font-family:monospace">max_tokens</span> floor, timeout-without-retry), after which
+        attempt 2 ran clean: 122 requests, 0 errors, p50 10.7 s, no runaway. The verdict, judged from
+        transcripts and page end states (exit codes lie — two "successful" runs were graceful surrenders
+        with confidently wrong reports): <b>T1 ✗ 99 s</b> (asyncio import fight), <b>T2 ✗ 132 s</b>
+        ("this site has no login page" — it does), <b>T3 ✗ 308 s</b> (typed the credentials, the click
+        never navigated), <b>T4 ✗ 600 s</b> (~40 turns fighting the harness's private browser API),
+        <b>T5 ✗ 601 s</b> (logged in, stuck on the sort dropdown) — <b>0/5, exactly the native-4B
+        baseline's score</b>, against the same 4B + decision chain at <b>5/5 in 2:50</b>. The 12B reasons
+        beautifully between its errors — 25+ distinct re-plans on T4 — but it has never seen this
+        harness's private tool vocabulary, so its turns go to API archaeology instead of the task.
+        <b>The end-to-end win is an interface story, not a model-scale story.</b> The open follow-up is
+        unchanged: port the element-read scorer (forced decoding, ~5–8 s per decision over HTTP) and
+        recalibrate the chain's constants to test the fair arm — Gemma 12B <i>with</i> the chain.
+      </div>
+      <h3 style="margin-top:26px">The "worth stealing" program, run in order — rubric reads, prefix cache, temperature, sidecar</h3>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Rubric reads (4-level) — the frozen bar says NOT PROMISING, but the floor disease is nearly cured where it matters.</b> One pre-registered pass over all 815 probes, same evidence rule and grammar-forced recipe, E = Σ i·p over far/partly/nearly/fully done: the best frozen operating point is 56% det / 20% FA vs the required ≥67% / ≤13% — the binary read keeps the general dial. The pre-registered cuts tell the interesting story: on <i>correct</i> success claims (the t5/t1 "confident no on a true report" family), the binary reads p_done &lt; 0.25 for 65% while the rubric reads E &lt; 1.0 for only 9% (37/54 land at "nearly done"); on success claims the rubric at T=2.0 separates 62/24 where the binary separates 79/74; on failure claims the rubric detects 40% vs the binary's 7%. The confidently-wrong tail persists (26/145 wrong success claims read "fully done") — a finer answer scale does not fix evidence latching. Recorded as dev-set leads only; nothing deploys; no iteration.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Prefix reuse for the reads — measured, and the fix is client-side, not a server flag.</b> The build's slot selector is prefix-aware ("LCP similarity"): identical prompts dispatched <i>sequentially</i> re-evaluate 1 token each after the first (~170 ms vs 765 ms / 2,504 tokens — ~4.5× cheaper), zero flags. Both patterns the chain actually uses defeat it: parallel candidate dispatch splits across slots (both prefill in full), and the four review frames diverge at the first token, so LRU rotates and every read pays a full ~2.5k-token prefill. <code>--cache-reuse 256</code> was measured: zero improvement. The levers are (a) dispatch the candidate reads sequentially and (b) restructure frame prompts so the shared evidence leads and the per-frame question trails — recorded as an infra lead; chain code unchanged.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Per-frame temperature fitting — demoted, and the reason is structural.</b> The gate consumes raw read scores against thresholds, so any monotone rescale (temperature included) moves every score together and changes no operating point; the observed errors are saturated ties (0.0) in both directions, which no single temperature separates. The idea is retired from the "worth stealing" list.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>The sidecar kill-test — a formal PASS that the audit kills: no zero-shot signal in either off-the-shelf checkpoint.</b> Both repos' published reflex checkpoints ran over all 473 polar probes through their native serving paths (AgentJev-0.6B full-state release into its Qwen3-0.6B backbone, missing=0 unexpected=0, shipped temperature 1.0717; Laya's noul path), one pre-registered pass on CPU, majority printed before any model output (63% → bar 68%), zero truncations. AgentJev scored 82.9% — a pass by the letter — but the join is 82.2% failed-task probes, and a constant "the task failed" predictor scores 82.2% with det 83% / FA 18% on the identical join; AgentJev (which answered "failed" on 458/473 probes) beats that constant by exactly 3 probes out of 473, all on the false-alarm side, zero extra detections. Laya lands 14.6 points <i>below</i> the constant (67.7%). The pre-registered bar referenced the wrong majority — claim-consistency classes (63%) rather than the outcome classes (82%) the accuracy metric actually scores — a flaw recorded as the bench author's; no re-run, per the no-iteration rule. Consequences: the fine-tune-on-our-probes stage earns no green light, and nothing deploys. What survives from agent-jev is the recipe, not the checkpoint — a 0.6B backbone + set-encoder head, boolean/choice/score contracts, calibrated temperatures, prefix-shared candidate encoding — the right shape if a sidecar is ever trained on our own recycled probes and judged on a composition-balanced fresh sweep.
+      </div>
+      <div class="callout fail reveal" style="margin-top:10px">
+        <b>The measuring-stick program (pre-registered A–D) — the server itself was lying: two independent
+        read-corruption channels found, all four entries adjudicated on a repaired config.</b> Entry A
+        (sequential candidate dispatch) <b>failed parity as first run</b> (21/120 selected mismatches, max
+        |Δp| 0.61) and the hunt ended somewhere nobody looked: this llama.cpp build corrupts grammar-forced
+        read numerics <i>two ways</i> — (1) the default prompt/slot cache makes the <i>same prompt</i> read
+        differently across cache epochs (identical sequential reads stable within a moment, then shifting
+        0.19→0.27 and 0.67→0.83 after traffic), and (2) two same-prompt requests <i>batched together</i>
+        (workers ≥ 2, n_slots = 4) return reproducibly different logprobs regardless of cache (0.63 vs 0.14
+        for the same prompt, identical across cache on/off). Every sweep-era score file carries that noise.
+        The repair, pre-registered before testing (A2/A3): <code>-np 1 --no-cache-prompt</code> — after
+        which sequential reads reproduce <b>bit-exactly</b> (36/36 identical across bursts and separated
+        passes) and the parity re-run gives <b>exact zero</b> deltas on all 120 decisions. Final verdicts:
+        entry A — parity exact but median wall +13.7% (client-side round-trips) → <b>not deployed</b>,
+        chain code reverted byte-identical; the deployable fix is the server flags. Entry B
+        (evidence-first frame reorder) — <b>FAIL, do not port</b>: frame agreement 72.7% vs the 97% bar
+        while the byte-identical control read agreed 150/150 with |Δp| exactly 0 — prompt <i>order</i>
+        changes outcomes on a quarter to a third of frames; it is not transport.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Fresh balanced set (the v2 sweep, never previously probed), read clean — rubric verdict
+        INDETERMINATE by the frozen cell-size rule, with numbers that redraw the picture.</b> 69 probes,
+        model-blind quota balance (wrong-success 20 / right-success 9 / wrong-failure 20 / right-failure
+        20); both success-claim cells &lt; 30 → INDETERMINATE, reported not salvaged. Descriptively: the
+        rubric never false-challenges a genuinely passed page (<b>FA 0/9</b> at T=1.0 and 2.0) where the
+        binary done-read challenges <b>8/9</b>; the floor-disease pattern replicates stronger (rubric
+        E&lt;1.0 on 0/9 correct successes vs the binary's p&lt;0.25 on 8/9); and the binary done-read is
+        <i>outcome-inverted</i> on success claims — failed pages read p_done median 0.58, passed pages
+        0.06 — scoring 49% as an outcome classifier on the balanced set, below the 58% failed-share
+        constant on a join where that comparison is finally fair. Neither instrument detects much (det
+        25%/15%/0%). Nothing deploys; the deferred decision stands — reconstruct the arms runner and run
+        ~3× more passed sessions to size the right-success cell, now with a clean instrument waiting.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Entry E — the properly-sized judgment: 168 fresh chain sessions, 316 balanced probes — the
+        frozen bar still says no, but now we know exactly what the rubric is.</b> The v3 sweep (24 tasks
+        × 7 fresh seeds, on the verified <code>-np 1 --no-cache-prompt</code> server end-to-end — the
+        first sweep whose agent turns <i>and</i> chain reads are numerically sound) finished 168/168:
+        21 passes (12.5%), all in four click-family tasks; 135 failures at reward 0 (52 cap-outs); 12
+        reward-collection losses. Frozen balance at the failure cell (Q=158) gave 316 probes; both reads
+        ran clean, zero errors. The success-claim cut: the binary done-read detects <b>88.8%</b> of
+        hallucinated successes but false-challenges <b>83.3%</b> of real ones (floor disease at scale —
+        p&lt;0.25 on 20/24 genuinely passed pages); the rubric replicates its one superpower — <b>FA 0/24
+        at T=1.0</b>, it never sinks a genuinely passed page — but stays blind as a detector (det 11.9%;
+        wrong-success E median 1.87: a hallucinated-success page usually <i>looks</i> partly done in its
+        final snapshot). Right-success cell 24 &lt; 30 → <b>INDETERMINATE</b> by the frozen rule, and the
+        bar fails its detection condition at both thresholds on the point estimates regardless — the
+        review-frame spot is not earned, nothing ports. The redirected conclusion: the rubric's honest
+        role on this domain is a <b>low-false-alarm confirmer</b> (an auto-approve / auto-retry gate),
+        not a flag; and at a 12.5% pass rate the 30-cell is unreachable by volume — the next lever is the
+        pass rate itself. Full ledger plus disclosures (including one mid-sweep false outage alarm,
+        root-caused to the known omp context-shaking loop — v2-identical, zero data impact) in
+        IMPLEMENTATION_PLAN.md.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Entry F — the order control the JevBench finding demanded: both reads are order-robust;
+        entry E's table is evidence, not position.</b> Prompted by an external benchmark's report of a
+        small decision model collapsing 72%→21% under reversed answer options, every entry-E read was
+        re-run with the candidate order reversed (yes/no swapped; the 4-level scale fully reversed,
+        semantics held canonical) on the same byte-identical 316-probe set — gated first by a bit-exact
+        reproduction check (40/40 values identical to entry E) on the verified server. Verdict: the
+        binary done-read flips only <b>6.3%</b> of decisions under reversal (order-robust band), the
+        floor disease persists in either order (p_yes rises on genuinely passed pages for just 4/24),
+        and the rubric's superpower replicates exactly — <b>0/24 false challenges at T=1.0 under the
+        reversed scale</b>. The feared position-latching failure mode is ruled out: the binary read
+        genuinely "believes" passed pages look undone, and the rubric genuinely never sinks a real
+        success. Sharpens entry E: an evidence limitation of the 12B on this domain, not a prompting
+        artifact; order-averaging stays optional hardening, and an order control is now standing
+        protocol before any read is judged load-bearing.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>Entry G — the multi-read "error bar" experiment: the confirmer spot is <i>not</i> earned, and
+        the reason closes the rubric's confirmer role entirely.</b> The plan (multi-draw sampling noise)
+        died at its own pre-registered sanity gate: this llama-server build applies <b>no temperature
+        under grammar constraints</b> (byte-identical top-4 logprobs at T=0.0/0.7/1.5; 27/27 identical
+        draws), so there was no sampling noise to average — zero probes were read under the dead design.
+        Amended before any read to prompt-noise: K=5 frozen framings, temperature 0, same pools and bar.
+        The canonical framing reproduced entry E <b>bit-exactly on 316/316 probes</b> — the instrument is
+        stable; the framings are not the problem, they are the measurement. Verdict against the frozen
+        bar (≥23/28 confirm, ≤14/288 false-approve): <b>NOT EARNED, both legs at once</b> — the frozen
+        gate confirms 3/28 passed-session probes while still false-approving 32/288, and every looser
+        gate false-approves 5–8× the allowance. Why: paraphrasing the two framing sentences moves the
+        read by up to <b>1.5 E-points</b> (per-framing means 1.09→2.63 on passed sessions) while the
+        passed-vs-failed separation <i>within</i> each framing is only ~0.15–0.4 — and the analytic spread
+        of the entry-E distributions sits near the uniform maximum (SD(E) ≈ 1.1). The read is
+        order-stable (entry F) but framing-fragile: <b>it measures the sentence, not the page</b>, and
+        multi-read agreement cannot certify a signal that is not there. The 0-FA property lives only at
+        strict-LOW challenge thresholds and never transfers to approval. Nothing ports; the confirmer
+        question is closed. Plus the promised knob hunt: the omp context-shaking storm that destroyed
+        14 click-link/navigate-tree transcripts is root-caused to the read-only base config's
+        <code>compaction.thresholdPercent: 30</code> (maintenance fires at exactly 39,321 tokens — the
+        observed storm plateau), with a launch-time <code>--config</code> overlay as the fix that leaves
+        config.yml untouched.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>The closing arc — autopsy, calibration, and the strategic verdict: the chain's LLM reads do
+        not pay for themselves on browser tasks; the wins live one layer down, in mechanics.</b>
+        <b>(1) Autopsy of the 20 zero-pass tasks</b> (147 failing sessions, transcript forensics):
+        67 % quick stops, 23 % marathon look-loops on a frozen page, 10 % the known shaking storms —
+        and one root disease under all three: <b>the model cannot read MiniWoB's own reward line</b>.
+        115 failing sessions have <code>Last reward: −X.XX</code> in the very snapshot the model just
+        read; 55 end with an explicit success claim anyway (one quotes the −1 as its success
+        "evidence"). A five-line mechanical finish-brake — veto success while the snapshot shows a
+        negative reward, re-open the episode — catches all of them at <b>zero false vetoes on the 21
+        passes</b>. <b>(2) The JevBench public-suite calibration is a documented dead end</b> (no data,
+        no harness, dead leaderboard host, and an API needing a vLLM diffusion branch), so the
+        measurement ran on our own stack instead: every read is <b>worse than a constant predictor</b>
+        (constant Brier 0.081 vs done-read 0.131 vs rubric 0.27–0.37; AUROC 0.51–0.57), and the
+        done-read's confident tail is inverted — at p ≥ 0.8 the observed pass rate is 16.7 %. On the
+        external yardstick's own axis, the read stack scores zero. <b>(3) Strategic verdict, recorded
+        in the ledger:</b> keep the log/gate skeleton, the ask-user ranking, and the methodology;
+        wire the mechanical finish-gate; suspend all LLM reads behind an explicit bar (AUROC ≥ 0.75
+        and Brier beating the constant on held-out sessions); and re-run the one A/B that matters —
+        chain + mechanical gate vs vanilla + the same one-sentence prompt fix. If the tie survives
+        that, the LLM layers come out of the browser-task path.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.14.1 → v3.14.3 — "fix it and re-test": T1 was plumbing, not the model's limit — chain-Gemma
+        12B back to 4/5 with every defect proven at the log level.</b> Four defects, each diagnosed from
+        transcripts + the decision log, each fixed at its own layer: <b>(1) context overflow</b> — the
+        remote fallback forwarded T1's whole history verbatim (43.5k tokens into 32k slots → backend 400);
+        now slimmed and trimmed to a 100k-char budget with the newest tool result kept verbatim. <b>(2)
+        blind click matcher</b> — books.toscrape renders titles in <code>title</code> attrs and image
+        <code>alt</code> texts, which the matcher never read; it now does, with an exact→fuzzy tier.
+        <b>(3) anchor yank</b> — "next" appears verbatim inside "go to the next page of the catalogue", so
+        the exact-phrase anchor stole the correct pick onto the pager; the pending step's own target is now
+        barred. <b>(4) the re-test exposed the real T1 bug</b> — the ordinal phrase ("open the first book's
+        detail page") executed by the positional snap was never consumed, so on the detail page it
+        re-resolved against the product pager and wandered; the executed click now tags its cell with the
+        phrase (<code>// click "In Her Wake" @e135 [task: …]</code>) and the phrase is consumed by tag.
+        Re-run: tagged click → clean stop → answer <b>"In Her Wake"</b>, reproduced twice. <b>(5) one more,
+        found in T3</b> — with the task done, a navigation that renumbered the Login button (e21→e23) let
+        the model's op read re-click it, flashing "username invalid" and poisoning the report; the same
+        stray click had sat unnoticed in the passing v3.14.0 run. New stand-down: when every task phrase is
+        consumed and the pick re-clicks an already-clicked <i>name</i>, the turn passes through — proven
+        causally (<code>stand_down=all-consumed-name-repeat</code> at ts=1789969084). Final adjudicated
+        table: v3.14.0 <b>4/5</b> → v3.14.1 <b>1/5</b> → v3.14.2 <b>2/5</b> → v3.14.3 <b>4/5</b> (T1 ✓ T3 ✓
+        T4 ✓ T5 ✓; T2 ✗ is model report variance — the action layer is flawless, the submit's own snapshot
+        shows the Logout link that means "logged in" (quotes.toscrape accepts any credentials, curl-verified),
+        and the model still wrote "unsuccessful" in 3 of 4 runs; v3.14.0 proved the correct read is
+        reachable). The v3.14.1/v3.14.2 dips were the same: identical executions, bimodal final reports —
+        plus a compounding test-env bug (saucedemo's cart persists in a cookie across runs; badge drifted
+        1→2 and fed a hallucinated "3"; profile wiped, T5 back to an honest badge-1 report). Suites:
+        <b>41/41</b> remote (char-budget, tag round-trip, anchor guard, stand-down), 19 browser, 46
+        ordinal, 9/9 + 10/10 chain, 25 universal, 35 coding, 46 adapters, 12/12 onboard. Host restored:
+        llama-server + chain proxy stopped by ps-verified PIDs, standing 4B proxy relaunched,
+        <code>standing-ok</code> verified.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.14.0 — the fair arm measured: Gemma 12B + chain over llama.cpp = 4/5.</b> The scorer port
+        exists (<code>eval/chain_http.py</code>): llama.cpp v0.4.x removed prompt-token logprobs, so the
+        teacher-forced sequence logprob is recovered by <b>grammar-forced generation</b> (a one-line GBNF
+        grammar per candidate; verified this build reports RAW per-token logprobs, summed = the d2 score),
+        with the read position pinned by closed-channel prefill (<code>enable_thinking:false</code>) and
+        generation kept no-think via <code>reasoning_budget_tokens:0</code>; forced reads ride a 4-worker
+        thread pool (~5–8 s per decision). The chain's constants were <b>refitted on the webreplay cal
+        split only</b> with the same documented fitter: temperature 1.0, accept gate 0.337, answer gate
+        0.30 — much looser than the 4B's 0.70/0.50, honestly reflecting Gemma's flatter read-score
+        distributions (AUC 0.65 vs the 4B's crisper separation). Same five tasks, transcript-adjudicated:
+        T4 <b>22 s ✓</b> (both selects), T2 <b>64 s ✓</b> (Logout link in page evidence), T3 <b>155 s ✓</b>
+        (both confirmations verbatim; one post-completion misroute, contained), T5 <b>81 s ✓</b> (Onesie
+        $7.99's own Add-to-cart ref clicked, badge 1), T1 <b>103 s ✗</b> — four real steps executed, then a
+        double-"next" misroute, a stale-ref click (failed loudly, no false action), and the kill shot:
+        the final turn's ~43.5k-token history exceeded the 32k per-slot window (131072 ÷ 4 parallel
+        slots) → backend 400 → session disposed. <b>0/5 → 4/5 on the 3× bigger model, with the reads on a
+        different inference stack</b> — the chain mechanism is portable, and its guards (repeat brake,
+        loud matchers) contained every Gemma misroute without a false action. Documented follow-ups: elide
+        oversized histories in the remote fallback (v3.11.8-style), and the looser gates show as more
+        misroutes — the measurable price of a weaker scorer. Host restored: standing proxy on the local
+        4B (v3.14.0), <code>standing-ok</code> verified.
+      </div>
+      <div class="callout note reveal" style="margin-top:10px">
+        <b>v3.11.17 — T1 fixed, the browser sweep goes 4/5 → 5/5 (2:50 total).</b> The long-standing T1
+        failure ("open the <i>first</i> book's detail page" — a target that names no element) fell to an
+        <b>ordinal snap</b>: a catalogue card emits its item twice (image link + title link share the
+        accessible name), so runs of ≥2 same-name links <i>are</i> the page's items, and "first" indexes them
+        by structure — no task nouns anywhere. Getting there surfaced three more structural layers: the
+        aria snapshot silently drops any element whose name is single-quoted (YAML-special characters —
+        most real titles: 44 of 115 candidates vanished on one page); the pending-step target and the
+        task-named candidates both displace into the same read-window slot and the second rebuild retook it
+        (the word "next" is task-named, so the pager link replaced the resolved book — the log showed the
+        right resolution and the wrong click on one line); and the harness's compaction cadence is survived
+        with a <b>chain-composed handoff</b> (the 4B answers real compaction prompts with bare EOS) plus
+        task recovery and session-wide action accumulation. The runtime half mattered as much: this GPU
+        falls off a cliff past ~35k context tokens (70–126 <i>seconds</i>/token on GenerationMixin.generate
+        at compaction sizes), fixed by a plain greedy decode loop (34–68 ms/token), single-live-page
+        history, and middle elision for oversized messages. The final catch was self-inflicted and caught
+        by its own instrumentation: a duplicated decode loop kept only the last (EOS) token — <i>every</i>
+        model generation returned empty — and the sweep that should have celebrated 5/5 returned fallback
+        answers on all five tasks. One loop, a 4-token EOS floor, and the re-run: T4 <b>11 s</b>, T2
+        <b>24 s</b>, T3 <b>23 s</b>, T5 <b>68 s</b> (Onesie verified in cart, badge matches), T1 <b>44 s</b>
+        (the In Her Wake detail page, by ordinal snap) — <b>5/5 with every report real model generation</b>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCATTER ================= -->
+<section id="landscape">
+  <div class="wrap">
+    <div class="kicker">The landscape</div>
+    <h2>Accuracy vs latency — every web arm, one picture</h2>
+    <p>Top-left is better. The native default (coral, right edge) is the worst place on the chart. The decide
+       family (cyan) and the gated chain (violet) occupy the accuracy ceiling — and the batched points (L1)
+       land within ~1.3× of vanilla no-think latency while holding the accuracy win.</p>
+    <div class="card reveal" style="padding:14px">
+      <div id="scatter"></div>
+      <div class="legend"><span class="lg-cyan">decide-based</span><span class="lg-violet">gated hybrid / chain</span><span class="lg-coral">vanilla generation</span><span class="lg-red">degenerate / aborted</span></div>
+      <p class="foot" style="margin:6px 0 0">Element accuracy (test split) vs p50 step latency, log time axis. H_web is plotted at its aborted n=78 point; G3_web at its subsampled n=200.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VERDICT ================= -->
+<section id="verdict">
+  <div class="wrap">
+    <div class="kicker">Verdict</div>
+    <h2>What this PoC concluded</h2>
+    <div class="callout win reveal" style="font-size:1.03rem">
+      <b>Yes — the routed runtime beats vanilla Qwen 4B at browser use.</b> Decisively against the model's own
+      default (2.8–3.6× accuracy at 14–17× the speed), and significantly against the best vanilla configuration
+      (+9.8 pts element accuracy, p≈8×10⁻⁹; +4.6 pts full tool-call accuracy, p=0.0033) — with zero parse
+      failures by construction. The claim is <b>this model against itself</b>: routing and calibrated gates, not scale.
+    </div>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag cyan">Conclusion 1</span><h4>The default is the worst config</h4>
+        <p>Think-always generation collapsed on every agentic metric (0.086–0.115 web elements, 79% unparseable
+        JSON) while costing 14–17× latency. Every gain in this PoC came from routing <i>away</i> from the default.</p></div>
+      <div class="card reveal"><span class="tag cyan">Conclusion 2</span><h4>Selection is classification</h4>
+        <p>Pure decision reads beat generation at perception-selection tasks — twice, on independent designs,
+        p≈10⁻⁷–10⁻¹¹. Answering from logits is more accurate <i>and</i> faster than writing prose.</p></div>
+      <div class="card reveal"><span class="tag violet">Conclusion 3</span><h4>Factorization needs context parity</h4>
+        <p>The decide→think→generate chain beats one-shot output only after each stage was given the context the
+        end-to-end prompt sees (op 0.507 → 0.843). The single most transferable engineering lesson of the PoC.</p></div>
+      <div class="card reveal"><span class="tag violet">Conclusion 4</span><h4>Gates are real, and domain-fitted</h4>
+        <p>Calibrated confidence separates right from wrong steps (0.398 vs 0.244 on web; 0.882 fast path on
+        MCQ) — but thresholds do not transfer across domains, and escalation must exchange information, not
+        reasoning (rich re-read fixed what think-escalation broke).</p></div>
+      <div class="card reveal"><span class="tag green">Conclusion 5</span><h4>Mode selection lives in the harness</h4>
+        <p>The routing signal can gate escalation inside a mode but shouldn't pick modes — now measured
+        directly (tab 4): a d2_over_modes read routes <i>below</i> the always-DECIDE constant (0.834 vs
+        0.844), sends 95% of value-needing steps down the choice contract, and costs −4.7 pts action
+        accuracy; even a perfect mode router loses (−2.8) because declaring the contract is what enables
+        the conditioned reads. The harness knows the affordances — that's the router — with auditable
+        per-stage events.</p></div>
+      <div class="card reveal"><span class="tag amber">Honest limits</span><h4>What this does not claim</h4>
+        <p>Accuracy evidence is offline Mind2Web replay; the live-browser work (staged-site demo 5/5, then 4
+        real sites / 20 steps at 0.90 adjudicated) exercises the runtime end-to-end but is not a benchmark —
+        the real-site run is a signal-quality feasibility result (n=20, 2 genuine errors). The beam chain,
+        now replay-measured, is a TYPE specialist: element +3.6 pts (p=0.021), action wash (p=1.0) — H3B
+        stays the default. Value accuracy (0.600 exact replay / 9-of-9 live) measured on copy-from-task
+        strings only. And the comparison is always Qwen 4B vs itself — better than its default, not
+        frontier-class.</p></div>
+    </div>
+    <div class="callout reveal" style="font-size:1.02rem">
+      <b>Does this transfer to other open models?</b> Yes as a <i>method</i>, no as a <i>config</i> — three tiers:
+      <br><b>1 · Machinery ports as-is.</b> The harness only needs logits and a tokenizer, so any open-weights
+      decoder LM runs it unchanged — nothing depends on the hybrid Gated DeltaNet backbone (closed APIs can't
+      run D2 at all: teacher-forced scoring isn't expressible there).
+      <br><b>2 · Numbers never port.</b> Every constant — temperature, acceptance thresholds, pre-mask gates —
+      was fit, not assumed, and provably doesn't transfer even across domains on the <i>same</i> model; a new
+      model means re-running the calibration step (by design: calibration is a measured procedure, not a config).
+      <br><b>3 · Effect size is the open question.</b> The claim is "beats its own default" — a stronger open
+      model writes better one-shot JSON and would narrow the gap, so the routing edge must be re-measured,
+      though the "default is the worst agentic config" pattern is consistent with the wider literature.
+    </div>
+    <h3>Next steps</h3>
+    <ul class="plain">
+      <li><s><b>Batched D2 scoring</b></s> — <b>done (L1)</b>: parity-gated, p50 1.70 → 0.34 s (5×) at statistically identical accuracy; ~1.3× vanilla no-think latency.</li>
+      <li><s><b>Live three-mode demo</b></s> — <b>done (L2)</b>: six-step live-DOM trajectory exercising all three modes, <b>5/5</b> steps verified against in-page gold effects (<code>eval/reports/live_demo/</code>).</li>
+      <li><s><b>S7 multimodal read test</b></s> — <b>done (L3)</b>: screenshot-conditioned D2 scores 0.960, identical to text-DOM (<code>eval/reports/s7/</code>).</li>
+      <li><s><b>Replay-validate the beam chain</b></s> — <b>done (L4)</b>: element +3.6 pts (p=0.021) driven by gold-TYPE (0.216→0.667), op −5.6 pts on CLICK arbitration, net action wash (0.316 vs 0.314, p=1.0) at 2.1× latency — a TYPE specialist; H3B stays the default (<code>eval/reports/webreplay_batched.md</code>).</li>
+      <li><s><b>Scale the live evaluation</b></s> — <b>done (L4)</b>: 4 real sites / 5 trajectories / 20 model steps, element 0.850 (0.90 adjudicated), value 9/9; the gate-as-ask-user sweep shows the replay threshold doesn't transfer (0/20 fires) but the ranking does — errors are the two lowest confidences; ≈0.4 catches both at 10% ask rate, precision 1.0 (<code>eval/reports/live_scale/</code>).</li>
+      <li><s><b>Run the "worth stealing" program</b></s> — <b>done (W1–W4)</b>: rubric reads NOT PROMISING on the frozen bar (56/20 vs required ≥67/≤13) with the floor-disease lead recorded (E&lt;1.0 on 9% of correct successes vs the binary's 65%); prefix reuse measured — sequential identical prompts cache natively (~4.5×), parallel candidates and divergent frame prefixes defeat it, <code>--cache-reuse 256</code> no help, levers client-side; per-frame temperature fitting demoted (monotone rescale is a no-op against thresholds); sidecar kill-test formally passed by AgentJev-0.6B at 82.9% and killed by audit — constant-predictor parity (+3/473, zero extra detections), Laya below constant, no zero-shot signal, nothing deployed, fine-tune not green-lit.</li>
+      <li><s><b>Fix the measuring stick first, then re-read on fresh data — all pre-registered, one pass each</b></s> — <b>done (M1–M4)</b>: server read-corruption found and root-caused (prompt/slot cache shifts sequential reads across cache epochs; concurrent same-prompt batching changes forced logprobs regardless of cache) → repaired config <code>-np 1 --no-cache-prompt</code>, reads bit-exact after; sequential dispatch: exact parity but +13.7% wall → not deployed, code reverted; evidence-first frame reorder: FAIL (72.7% agreement vs 97% bar, control read bit-exact) → not ported; fresh balanced v2 set read clean: rubric INDETERMINATE (cells &lt;30), rubric FA 0/9 vs binary 8/9 on correct successes, binary done-read outcome-inverted (49% vs the 58% constant) — superseding all sweep-era read scores for borderline judgments; deferred: ~3× more passed sessions to size the right-success cell.</li>
+      <li><s><b>Size the right-success cell properly and give the rubric bar its real judgment (entry E)</b></s> — <b>done (v3 sweep, 168/168)</b>: fresh chain sessions on the verified server end-to-end; 21 passes (12.5%), all click-family; frozen balance Q=158 → 316 probes, reads clean; success-claim cut: binary det 88.8% / FA 83.3% (floor disease at scale), rubric FA 0/24 at T=1.0 but det 11.9% — right-success cell 24 &lt; 30 → <b>INDETERMINATE</b> by the frozen rule and the bar fails detection at both T regardless → review-frame spot not earned, nothing ports; conclusion redirected: the rubric is a low-FA confirmer, not a detector, and the 30-cell needs a pass-rate intervention, not more volume.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= MINIWOB BENCHMARK ================= -->
+<section id="miniwob">
+  <div class="wrap">
+    <div class="kicker">Benchmark</div>
+    <h2>MiniWoB++: 96 episodes, chain vs vanilla — and what the transcripts say</h2>
+    <p>The decide chain and vanilla Gemma 4 12B ran the same 24 MiniWoB++ tasks on the same
+       2 deterministic seeds per task (48 episodes per arm, interleaved), scored by the environment's own
+       reward — not by exit codes or self-reports.</p>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag violet">Headline</span><h4>A statistical tie</h4>
+        <p>Chain <b>11/48 (23%)</b> vs vanilla <b>10/48 (21%)</b>; paired per (task, seed): chain 5, vanilla 4,
+        39 ties. The interim "chain is worse" reading was small-sample noise. The chain costs
+        <b>2.1× wall time</b> (223 s vs 107 s) — mostly standing down: ANSWER was the top-1 op read on
+        79% of decide reads.</p></div>
+      <div class="card reveal"><span class="tag coral">The asymmetry</span><h4>Wrong is terminal, failed is free</h4>
+        <p>MiniWoB scores a <i>wrong</i> action −1 and ends the episode; a <i>failed</i> action (selector miss,
+        no-op) costs only time. The chain's mistakes are confident and terminal (29 wrong-action fails vs
+        vanilla's 18); vanilla's stumbles are inert. Short-horizon click-games give the decision layer no room
+        to pay for itself.</p></div>
+    </div>
+    <h3 style="margin-top:22px">Four mechanisms, from the transcripts</h3>
+    <div class="grid2">
+      <div class="card reveal"><h4>1 · Submit-first ordering <span class="mono" style="font-size:.75rem">(9 sessions)</span></h4>
+        <p>The first chain action is the terminal button before its prerequisite — submit before the form is
+        filled, Login before credentials. The confident version of a safe intent, executed terminally.</p></div>
+      <div class="card reveal"><h4>2 · Refusal-as-payload <span class="mono" style="font-size:.75rem">(4 sessions)</span></h4>
+        <p>The value composer emits <i>"I am sorry, but I cannot provide the text…"</i> — and the chain types
+        the apology into the page.</p></div>
+      <div class="card reveal"><h4>3 · ANSWER stand-down <span class="mono" style="font-size:.75rem">(79% of reads)</span></h4>
+        <p>283/359 decide reads say "no browser action needed" — the chain parks while the clock burns. The
+        main source of the 2.1× latency.</p></div>
+      <div class="card reveal"><h4>4 · Matcher vocabulary gap <span class="mono" style="font-size:.75rem">(140 errors)</span></h4>
+        <p>The click cell's selector covers links, buttons and submit inputs only — checkboxes and radios are
+        unclickable. The 12B decide reads are near coin-flips here: mean top-1 confidence 0.340, median
+        margin 0.048, 51% of reads inside a 5-point margin.</p></div>
+    </div>
+    <h3 style="margin-top:22px">Safe fixes vs overfit traps → v3.14.4</h3>
+    <div class="callout win reveal">
+      <b>The rule:</b> MiniWoB scores abstention 0 <i>above</i> a wrong action −1 — so any timidity tweak raises
+      the number while making the agent worse. Recalibrating ANSWER on MiniWoB outcomes, blacklisting
+      Submit/Login labels, parsing the reward display: all rejected as overfitting in spirit. Two fixes
+      qualified as bug-grade and domain-general:
+      <br><b>1 · Refusal/empty-payload guard</b> — an apology or empty value never fires; the turn passes
+      through to the model instead. 15/15 probe sentences, including the trap ("I cannot say Vancouver" is a
+      value, not a refusal).
+      <br><b>2 · State-control coverage</b> — the click matcher now covers checkboxes/radios with label and
+      aria-name sources and prefers non-state controls on ties; TYPE is restricted to text-entry controls.
+      End-to-end in a real browser: the old JS reproduces the benchmark's exact error; the new JS scores
+      raw=1 on the failing episode, and passwords stay typable.
+    </div>
+    <h3 style="margin-top:22px">The checkpoint-review experiment — measured on both halves</h3>
+    <p>The "review the model's thinking at each checkpoint" idea, run to a verdict: for every assistant claim
+       that asserts world state, two grammar-forced reads against the newest page snapshot —
+       <i>does the evidence support this claim?</i> (claim read) and <i>did the attempted task succeed?</i>
+       (independent read). A <b>brake</b> = the asserted polarity contradicted by the independent read.</p>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag cyan">Labeled half</span><h4>6 adjudicated sessions · 24 probes</h4>
+        <p>Detection <b>6/9 (67%)</b> on checkable wrong conclusions — but false alarms <b>2/4 (50%)</b> on
+        correct ones. The claim and independent reads are <b>correlated</b>: same model, same evidence, same
+        blind spots. The second read inherits the first's mistakes.</p></div>
+      <div class="card reveal"><span class="tag cyan">Objective half</span><h4>96 benchmark sessions · 815 probes · CDP ground truth</h4>
+        <p>Brake catches <b>117/175 (67%)</b> of wrong-polarity claims with <b>18%</b> false alarms; on
+        final-report claims, <b>77%</b> detection / <b>32%</b> FA. The claim read alone is uninformative
+        (50%/48%). Threshold curve is shallow: 0.5 → 67%/18%, 0.05 → 47%/6%.</p></div>
+    </div>
+    <div class="callout reveal" style="margin-top:14px">
+      <b>Verdict:</b> real review signal — 77% of false success reports get flagged by a second read of the
+      page — but not deployable as an automatic gate at this model size (a third of correct final reports
+      would be challenged; 59% on chain sessions). The deployable forms: a log-only review flag for a second
+      look, or grounding the brake in the objective evidence the harness already has (the CDP reward) rather
+      than another self-read.
+    </div>
+    <h3 style="margin-top:22px">V2 re-run: the fixes are real, the benchmark can't see them</h3>
+    <p>The chain arm alone re-ran the same 48 episodes on v3.14.4 (same deterministic seeds):</p>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag violet">Score</span><h4>10/48 — still a tie, still noise</h4>
+        <p>Vanilla 10/48 ≈ chain v1 11/48 ≈ chain v2 10/48. Paired vs vanilla 5/5/38; vs v1 chain
+        <b>47/48 identical</b> (the one flip never touches the changed code paths — model variance, not the diff).
+        Wall time unchanged at 219 s.</p></div>
+      <div class="card reveal"><span class="tag cyan">Mechanisms</span><h4>Both fixes verified in the wild</h4>
+        <p>Refusal payloads: <b>7 sessions → 0</b>. Click-checkboxes matcher errors: <b>55 → 17</b> on the same
+        episodes, and those episodes changed from inert timeouts to real checkbox attempts (one earns fractional
+        credit −⅓ where v1 scored nothing). Correct code, invisible to the aggregate.</p></div>
+    </div>
+    <div class="callout reveal" style="margin-top:14px">
+      <b>Bottom line:</b> MiniWoB's terminal-wrong, short-horizon structure cannot see bug-grade fixes — an
+      episode that now checks the right boxes but still ends wrong scores the same as one that never tried.
+      The decision layer's value case remains the stateful multi-step regime where it was already proven
+      (versioned sweeps, real five-site trajectories), not this benchmark.
+    </div>
+
+    <h3 style="margin-top:26px">v3.15.0 — the six-lever hygiene pass, under an explicit overfit audit</h3>
+    <p>The audit rule, applied to every change before it shipped: MiniWoB scores <i>abstaining</i> (0) above
+    <i>wrong action</i> (−1), so any timidity tweak would raise the score while making the agent worse. A change
+    is accepted only if it reads page structure and task text (never reward or benchmark vocabulary), is judged
+    on held-out criteria (offline suites + the real-site sweep — MiniWoB reported as sanity only), and can fail
+    honestly in both directions.</p>
+    <div class="grid2">
+      <div class="card reveal"><span class="tag cyan">Routing</span><h4>Submit-precondition gate + ledger</h4>
+        <p>Before a submit-click, the cell asks the <b>browser's own</b> constraint validation; if it would
+        reject, the click throws <code>submit-precondition: N fields: … — fill them, then submit</code> into the
+        tool result — routing with a reason, never a silent block (novalidate honored; a live engine quirk —
+        the <code>novalidate</code> IDL property reading <code>undefined</code> with the attribute present —
+        caught and handled). The task ledger (what work is still owed) is now written into every decide row of
+        the audit log. Browser-validated on a 5-scenario page.</p></div>
+      <div class="card reveal"><span class="tag violet">Signals, not gates</span><h4>Review flags + case fix</h4>
+        <p>The checkpoint-review experiment's deployable residue shipped as log-only flags
+        (<code>completion-unverified</code>, <code>acted-under-answer</code>) — never a gate, per its own ROC.
+        Plus a one-line matcher bug found by validation: the click name was never lowercased, so a page-cased
+        <i>"Tab #1"</i> could never match the DOM (22+ transcript errors) — now structurally impossible. ARIA
+        roles (tab/menuitem/link/option/treeitem/switch) added by the standard's contract, widget-tested; the
+        read-batching audit confirmed batching was already in place.</p></div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="card reveal"><span class="tag green">Held-out acceptance</span><h4>Real-site sweep: 4/5 — same as baseline</h4>
+        <p>Transcript-adjudicated on the 12B stack: books <b>✓</b> ("In Her Wake" after the 4-step browse),
+        internet <b>✓</b> (logout confirmation quoted), dropdown <b>✓</b> ("Option 2"), saucedemo <b>✓</b>
+        (cheapest item, badge 1); quotes ✗ — the chain's login <i>succeeded</i>, the model misread the logged-in
+        state, went back, and burned the budget on the site's CSRF-reloaded form. Mechanism evidence in the same
+        run: 21 ledger rows, 4 review flags, gate present everywhere and correctly silent (fields were always
+        filled first).</p></div>
+      <div class="card reveal"><span class="tag amber">Sanity only</span><h4>MiniWoB form subset: the flags point at the truth</h4>
+        <p>login-user 1✓/1✗, form-sequence 0/2 (model-layer slider claims — not submits). The audit log tells
+        the real story: <b>11 review-flagged turns, 8 of them on the one failing session</b> whose ledger still
+        showed 3 pending phrases. Uncorroborated completions are now loud in the log and invisible to the score —
+        exactly the deployable form the review experiment predicted. Offline suites: 243/243 green.</p></div>
+    </div>
+    <div class="callout reveal" style="margin-top:14px">
+      <b>Overfit audit statement:</b> no change in v3.15.0 reads reward, benchmark vocabulary, or site names;
+      every change routes (acts with a reason) rather than retreats (blocks or stands down); acceptance was
+      decided by held-out suites and the real-site sweep, with the benchmark reported as sanity only. The
+      ledger and the case fix are structural anti-timidity: they push the agent toward completing named work,
+      which could only lower an abstention-rewarded score.
+    </div>
+
+    <h3 style="margin-top:26px">v3.16.0 — the review gate becomes an option; retirement decisions</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>Self-review, config-gated (the learned-adapter pattern).</b> The completion self-review ships as a
+        <code>completion_review</code> block in the backend config: <b>missing or <code>enabled: false</code> =
+        byte-for-byte v3.15.0</b>. <code>mode: "log"</code> records the independent DONE/NOT-DONE read
+        (<code>review_read</code>) on the review-flagged stand-down row. <code>mode: "gate"</code> additionally
+        challenges an uncorroborated stand-down when the read confidently says NOT done <i>and</i> a concrete
+        alternative action is stashed — the stashed cell ships and the turn keeps working. Default OFF,
+        deliberately: the objective-label experiment measured 77% detection / 32% false alarms, so the gate is
+        offered, never assumed. A failed read degrades to passthrough — the option can only route, never block.
+        Suites: 261 cases green across ten files, including the new 18-case truth-table suite.
+      </div>
+      <div class="callout reveal">
+        <b>Retirement decisions recorded.</b> <b>Kept:</b> the grammar-forced read core + chain state tracking,
+        the routing-never-blocking trio, the measurement instrument, the serving bridge + calibration fitter.
+        <b>MiniWoB demoted to a smoke test</b> — three arms scored 10/11/10 of 48 with the chain at 2.1× wall;
+        its terminal-wrong scoring cannot see the layer's value case, so it stays in CI only and acceptance is
+        decided by held-out real-site sweeps. <b>Learned-adapter loop frozen</b> (config-gated, unproven on a
+        real workload). <b>Universal tier dormant.</b> <b>Local 4B generation stack queued for retirement</b>
+        when the standing proxy moves to the served backend.
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">2026-09-22 — single-model framing backtest: vary the question, not the model</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>The experiment.</b> Constraint: one model, no second opinion. Question: is the completion check's
+        weakness the model, or the frame it reads through? The 596 ground-truth probes were re-read by the
+        <i>same</i> 12B through three framings: <b>GOAL</b> (evidence + the task's goal line),
+        <b>DELTA</b> (before/after snapshots — change evidence), <b>COND</b> (evidence + the stored claim-read
+        verdict). Same forced-read recipe, ~35 min, 815/815 rows. The framings disagree with each other by
+        0.18–0.28 of probability mass on average — the same model, asked differently, decorrelates from itself.
+      </div>
+      <div class="callout reveal">
+        <b>The result (T=0.5, all-polar det / FA).</b> Baseline 67% / 18%. GOAL 69 / 18. DELTA 57 /
+        <b>13</b> (the conservative veto). COND 74 / 16. <b>min(GOAL, DELTA, COND): 78% / 17%</b> — eleven more
+        wrong claims caught at the same false-alarm rate, no second model, ~2 s of extra reading. On chain
+        sessions the GOAL read alone moves 66/34 → <b>78/21</b>. Final-report: baseline 77/32; min-agg 85/39;
+        mean(done,goal,delta) 67/<b>22</b>. Deployment shape (ready, not shipped): the
+        <code>completion_review</code> read becomes the 3-read min behind the same config gate; acceptance by
+        held-out real-site sweep. The checker's weakness was the question, not the model.
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">2026-09-22 — v3.16.1 deployed: the 3-frame review ships; the live test finds its trigger-site coverage fact</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>What shipped.</b> The completion review's single DONE/NOT-DONE read is replaced by the backtest's
+        three frames — GOAL (task goal line + newest snapshot), DELTA (the session's first snapshot vs the
+        newest, via a new bounded per-conversation capture), COND (snapshot after a claim-check of the model's
+        own last prose) — and the unchanged gate predicate now consumes <b>p_min</b> of the three. Same config
+        block, same default-OFF posture, same degrade-on-error. 31 review-gate checks (capture semantics, prose
+        extraction, prompt phrasings, min wiring), all ten suites green at <b>274 cases</b>; deployed to the GPU
+        host (md5 verified both sides), proxy live on <code>mode: gate</code>.
+      </div>
+      <div class="callout reveal">
+        <b>The live test, honestly.</b> Two 12B sessions, zero review fires — and that is the finding. Run 1:
+        login objectively succeeded, the model navigated <i>back</i> to /login and reported failure, but every
+        answer turn had a <i>passing</i> element gate, so the fallthrough — the review's only trigger site — was
+        never reached. Run 2 (deliberately truncated task): the model completed it truthfully and its final text
+        turn bypassed the decide chain entirely. A live replay of the hook's four reads on run 1's real artifacts:
+        p_goal 0.067, p_delta 0.116, p_cond 0.254 (<b>p_min 0.067</b> — a challenge, had the site fired) — but
+        p_claim <b>0.963</b>: the evidence supports the model's final-page description. Its error was about
+        <i>history</i>, not the final snapshot — so the review would have flagged a truly-done session here (one
+        live instance of the measured ~1-in-3 false-alarm rate). Extending the hook to the gate-passed answer
+        path is the obvious follow-up; this transcript is exactly the caution that it needs its own acceptance
+        sweep. Standing 4B proxy restored, standing-ok verified.
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">2026-09-22 — the HISTORY frame: a pre-registered negative (deployed nothing, learned two things)</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>The experiment.</b> The live failure was <i>forgetting one's own success</i>, and all three deployed
+        frames read only the newest snapshot — so a fourth frame (<i>"did the goal appear to be achieved at any
+        point in this session?"</i>, reading the ordered page list) was the obvious candidate. Run with the
+        no-overfit discipline the user asked for: framing, evidence rule, thresholds, cuts and the acceptance bar
+        frozen in the script <b>before any result existed</b>, a mechanical vocabulary guard on the prompt, one
+        pass over all probes, no tuning on outcomes. 815/815 reads, 0 errors.
+      </div>
+      <div class="callout reveal">
+        <b>The result: DO NOT DEPLOY.</b> min(goal,delta,cond,hist) = 79% det / 18% FA vs min(goal,delta,cond)
+        78% / 17% — <b>+0.6 det for +0.7 FA</b>, nowhere near the pre-registered +5/−2 bar. Two mechanisms
+        recorded: (1) the target class is small and hard — wrong failure claims are 30 of 175 wrongs and no frame
+        catches more than 9; forgotten success is one line of evidence in thousands of characters of page noise;
+        (2) <b>a min-aggregate can only consume pessimism</b> — a fourth read can never raise it, so HISTORY's
+        genuine virtue (1.2% false alarms against phantom success) is exactly the direction a min cannot use.
+        The cheap idea is measured and closed rather than shipped on intuition; "listen to a conservative
+        optimist" (pessimism from ≥2 frames) is the open question it leaves.
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">2026-09-22 — the voting-rule test: the data caught a wrong premise, and corrected the false-alarm reading</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>The error, caught.</b> A pre-registered voting experiment (pure arithmetic on the saved reads, no GPU)
+        mislabeled the deployed rule as "all three must flag." It isn't: the gate fires when the <i>minimum</i>
+        of the three verdicts dips — i.e. <b>any single dissenter vetoes</b> a success claim. The decomposition
+        proves it (135 + 2 = 137 detections, split exactly along claim direction). Per the no-overfit discipline,
+        the void comparison was retracted in place — no re-running with a new bar after peeking; nothing deployed.
+      </div>
+      <div class="callout reveal">
+        <b>The two findings that survive.</b> (1) The vote-count dial, measured on success claims: any-one-vetoes
+        (deployed) <b>93% det / 93% FA</b>; 2-of-3 77/48; all-three 57/7 — a pure operating-point dial, no
+        dominating rule anywhere in the frozen set. (2) <b>The headline "17% false alarms" flatters the
+        gate</b>: it mixes claim directions, and on correct <i>success</i> claims — what a stand-down gate
+        actually faces — the deployed rule would challenge ~93% (bench-graded), worse than the baseline read's
+        74%. The gate is now measurably, not just rhetorically, a "offer never assume" feature: no gate mode
+        until a held-out real-site sweep measures the real challenge rate on correct completions.
+      </div>
+    </div>
+    <h3 style="margin-top:26px">2026-09-22 — v3.16.2 + the held-out sweep: the coverage fix proves itself on fresh real-site sessions</h3>
+    <div class="grid2">
+      <div class="callout reveal">
+        <b>What shipped.</b> The four review reads move into a shared <code>review_frames_run</code>, and the
+        review gains a <b>second, log-only trigger site</b> — the gate-PASSED answer stand-downs where the live
+        run's wrong report had slipped through unreviewed — plus a third on the no-candidates answer exit. New
+        <b>mode "annotate"</b> never gates: when all three frames read NOT-done it appends a one-line
+        <i>[verification note]</i> caveat to the model's own prose answer instead. All ten suites green
+        (review-gate now 41 checks); default OFF unchanged.
+      </div>
+      <div class="callout reveal">
+        <b>The sweep (8 fresh sessions, log mode, pre-registered bars).</b> 4 of 8 review reads fired at the
+        new site — coverage v3.16.1 did not have. The sweep's single <b>wrong success claim</b> (reported HN
+        row 2 as "position 3") is exactly the gate would-fire: p_min 0.0 at the fallthrough with a concrete
+        alternative stashed; <b>zero</b> would-fires on the four correct success reports. Annotate flagged
+        only the two sessions that genuinely ended wrong or dead — 0/5 correct reports. Both frozen offer-bars
+        met; posture stays default-OFF. Honest hairs: one correct claim read p_min 0.0 and was saved only by
+        the no-fallback-cell rule; two sessions died on the 12B's 32k-slot context overflow (infra, not chain).
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REFERENCES ================= -->
+<section id="refs">
+  <div class="wrap">
+    <div class="kicker">References & artifacts</div>
+    <h2>Everything is on disk</h2>
+    <div class="grid2">
+      <div class="card reveal"><h4>📄 Reports & records</h4>
+        <ul class="plain" style="margin-bottom:0">
+          <li><code>eval/reports/headline.md</code> — MCQ headline table + records (n=500, matched gates)</li>
+          <li><code>eval/reports/webreplay.md</code> — Gate B tables, all 11 web arms</li>
+          <li><code>eval/reports/webreplay_records.jsonl</code> + <code>_batched.jsonl</code> — every scored decision, per-item (sequential + batched)</li>
+          <li><code>eval/reports/live_demo/live_demo.md</code> — the L2 live browser trajectory + screenshots</li>
+          <li><code>eval/reports/s7/s7_multimodal.md</code> — the S7 screenshot-conditioned read test</li>
+          <li><code>eval/reports/mode_probe/mode_probe.md</code> — d2_over_modes S-experiment (can the reads pick the mode?)</li>
+          <li><code>eval/reports/webreplay_batched.md</code> — batched session tables + the L4 beam-vs-H3B analysis</li>
+          <li><code>eval/reports/live_scale/live_scale.md</code> — L4 real-site scaled evaluation + gate-as-ask-user sweep</li>
+          <li><code>/tmp/mw_bench/</code> — MiniWoB++ benchmark: <code>main.jsonl</code> (96 episodes, CDP rewards), <code>investigation.md</code> (root-cause autopsy), <code>final_tally_v3143.txt</code>, checkpoint-review probes/scores/analysis</li>
+          <li><code>IMPLEMENTATION_PLAN.md</code> — full progress log, verdicts, negative results</li>
+        </ul></div>
+      <div class="card reveal"><h4>⚙️ Runtime & evaluation code</h4>
+        <ul class="plain" style="margin-bottom:0">
+          <li><code>hybrid/router.py</code> — the three-mode router (self-test: <code>python -m hybrid.router</code>)</li>
+          <li><code>hybrid/scoring/sequence_logprob.py</code> — batched D2 scoring (shared/copy/batched cache strategies + probe)</li>
+          <li><code>eval/batch_check.py</code> — the L1 parity gate (probe validation, negative control, near-tie criterion)</li>
+          <li><code>eval/livedemo.py</code> + <code>eval/livedemo_site/</code> — live demo driver, DOM extractor, staged site</li>
+          <li><code>eval/s7_multimodal.py</code>, <code>eval/s7_tasks.py</code> — multimodal read test</li>
+          <li><code>eval/mode_probe.py</code> — d2_over_modes arm + mode-router simulation</li>
+          <li><code>eval/livescale.py</code> — L4 real-site scaled evaluation (extract-only gold walk, gate-as-ask-user sweep)</li>
+          <li><code>eval/webreplay.py</code>, <code>eval/webgate.py</code>, <code>eval/webverdict.py</code> — Gate B runner, gate fitting, McNemar verdicts</li>
+          <li><code>eval/datasets/build_webreplay.py</code> — Mind2Web → replay dataset</li>
+        </ul></div>
+      <div class="card reveal"><h4>📚 External</h4>
+        <ul class="plain" style="margin-bottom:0">
+          <li><b>Mind2Web</b> — Deng et al., 2023, <i>Towards a Generalist Agent for the Web</i> (replay source: <code>osunlp/Mind2Web</code>)</li>
+          <li><b>Qwen3.5</b> — model card & technical report (hybrid Gated DeltaNet architecture)</li>
+          <li><b>Gated DeltaNet</b> — Yang, Kautz & Hatamizadeh, 2024 (linear-attention layer)</li>
+          <li><b>Temperature scaling</b> — Guo et al., 2017, <i>On Calibration of Modern Neural Networks</i></li>
+          <li><b>McNemar test</b> — McNemar, 1947 (matched-pair significance, used throughout)</li>
+        </ul></div>
+      <div class="card reveal"><h4>🧭 Design doc</h4>
+        <ul class="plain" style="margin-bottom:0">
+          <li><code>qwen35_hybrid_reflex_decide_think_poc_v2.md</code> — the preregistered spec: phases, kill
+          criteria, S-experiments; Appendices now include the measured mode router (App. E)</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div style="font-weight:800;letter-spacing:.06em">REFLEX · DECIDE · THINK</div>
+    <div class="sig">
+      <span>Qwen3.5-4B · hybrid Gated DeltaNet</span><span>·</span>
+      <span>Mind2Web offline replay</span><span>·</span>
+      <span>matched-gate, McNemar-tested</span><span>·</span>
+      <span>single-file report · generated 2026-09-19</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- scroll progress ---------- */
+const prog = document.getElementById('progress');
+addEventListener('scroll', () => {
+  const h = document.documentElement;
+  prog.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+}, {passive:true});
+
+/* ---------- nav highlight ---------- */
+const secs = [...document.querySelectorAll('section[id], header.hero')];
+const navLinks = [...document.querySelectorAll('nav a.nl')];
+const io = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, {rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s => io.observe(s));
+
+/* ---------- reveal + count-up ---------- */
+const cu = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  const el = e.target, target = parseFloat(el.dataset.count), dec = +el.dataset.dec;
+  const t0 = performance.now(), dur = 1300;
+  (function tick(t){
+    const p = Math.min((t - t0) / dur, 1), ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * ease).toFixed(dec);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+  cu.unobserve(el);
+}), {threshold:.6});
+document.querySelectorAll('[data-count]').forEach(el => cu.observe(el));
+
+const ro = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); }
+}), {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+/* ---------- bar charts ---------- */
+function bars(el, rows){
+  const box = document.getElementById(el);
+  box.innerHTML = rows.map(r => `
+    <div class="brow">
+      <div class="bl">${r.label}</div>
+      <div class="btrack"><div class="bfill bf-${r.color}" data-w="${Math.min(r.v / r.max * 100, 100)}"></div></div>
+      <div class="bv mono">${r.txt ?? r.v.toFixed(3)}</div>
+    </div>`).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    box.querySelectorAll('.bfill').forEach((f, i) => setTimeout(() => f.style.width = f.dataset.w + '%', i * 90))));
+}
+['bars_mcq','bars_web','bars_tool'].forEach(id => {
+  new IntersectionObserver((es, o) => es.forEach(e => {
+    if (!e.isIntersecting) return; o.unobserve(e.target); const id = e.target.id;
+    if (id === 'bars_mcq') bars(id, [
+      {label:'A · never-think', v:.308, max:.9, color:'coral'},
+      {label:'C · no-think generate', v:.764, max:.9, color:'coral'},
+      {label:'G · think-always (default)', v:.490, max:.9, color:'red'},
+      {label:'H · escalate→generate', v:.786, max:.9, color:'violet'},
+      {label:'H · escalate→re-decide', v:.856, max:.9, color:'violet'},
+    ]);
+    if (id === 'bars_web') bars(id, [
+      {label:'G_web · think-always', v:.115, max:.42, color:'red'},
+      {label:'C_web · no-think', v:.258, max:.42, color:'coral'},
+      {label:'D2E · decide (v1)', v:.320, max:.42, color:'cyan'},
+      {label:'D2E2 · op-first (v2)', v:.344, max:.42, color:'cyan'},
+      {label:'H2 · gated re-read (v2)', v:.356, max:.42, color:'violet'},
+    ]);
+    if (id === 'bars_tool') drawTool(curMetric);
+  }), {threshold:.3}).observe(document.getElementById(id));
+});
+
+/* ---------- tool-call metric toggle ---------- */
+const TOOL = {
+  action: [
+    {label:'G3 · think-always JSON', v:.100, max:.4, color:'red'},
+    {label:'C3 · one-shot no-think JSON', v:.274, max:.4, color:'coral'},
+    {label:'H3 · chain (narrow op ctx)', v:.204, max:.4, color:'violet'},
+    {label:'H3B · chain (options op ctx)', v:.320, max:.4, color:'violet'},
+  ],
+  elem: [
+    {label:'G3 · think-always JSON', v:.100, max:.4, color:'red'},
+    {label:'C3 · one-shot no-think JSON', v:.303, max:.4, color:'coral'},
+    {label:'H3 · chain (narrow op ctx)', v:.356, max:.4, color:'violet'},
+    {label:'H3B · chain (options op ctx)', v:.356, max:.4, color:'violet'},
+  ],
+};
+let curMetric = 'action';
+function drawTool(m){ bars('bars_tool', TOOL[m]); }
+document.querySelectorAll('#tool_toggle .tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#tool_toggle .tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); curMetric = b.dataset.metric; drawTool(curMetric);
+}));
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs .tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs .tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === b.dataset.tab));
+}));
+
+/* ---------- accuracy vs latency scatter ---------- */
+const PTS = [
+  {n:'G_web · think-always',        x:27.42, y:.115, c:'#f87171', s:6},
+  {n:'G3 · think-always JSON',      x:31.26, y:.100, c:'#f87171', s:6},
+  {n:'C_web · no-think',            x:0.26,  y:.258, c:'#fb923c', s:6},
+  {n:'C3 · one-shot JSON',          x:0.75,  y:.303, c:'#fb923c', s:6},
+  {n:'D2E · decide v1',             x:1.60,  y:.320, c:'#22d3ee', s:6},
+  {n:'D2E2 · decide v2',            x:1.70,  y:.344, c:'#22d3ee', s:6},
+  {n:'OPFIX · op repair',           x:1.70,  y:.344, c:'#22d3ee', s:5},
+  {n:'H2 · gated re-read',          x:1.77,  y:.356, c:'#a78bfa', s:7},
+  {n:'H3B · tool-call chain',       x:2.09,  y:.356, c:'#a78bfa', s:7},
+  {n:'H3B · chain batched (L4)',    x:0.51,  y:.353, c:'#a78bfa', s:7},
+  {n:'H4B · beam chain (L4)',       x:1.08,  y:.389, c:'#a78bfa', s:7},
+  {n:'D2E2 · batched (L1)',         x:0.344, y:.348, c:'#22d3ee', s:6},
+  {n:'H2 · batched (L1)',           x:0.368, y:.353, c:'#a78bfa', s:7},
+  {n:'H_web · v1 hybrid (aborted)', x:22.58, y:.244, c:'#f87171', s:6},
+];
+(function scatter(){
+  const W = 900, H = 330, L = 64, R = 20, T = 18, B = 58;
+  const pw = W - L - R, ph = H - T - B;
+  const lx = v => L + (Math.log10(v) - Math.log10(0.2)) / (Math.log10(45) - Math.log10(0.2)) * pw;
+  const ly = v => T + ph - (v / 0.42) * ph;
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
+  [0.3,1,3,10,30].forEach(v => s += `<line x1="${lx(v)}" y1="${T}" x2="${lx(v)}" y2="${T+ph}" stroke="#1f2b40"/>
+    <text x="${lx(v)}" y="${H-36}" fill="#6b7d99" font-size="12" text-anchor="middle">${v}s</text>`);
+  [0,.1,.2,.3,.4].forEach(v => s += `<line x1="${L}" y1="${ly(v)}" x2="${L+pw}" y2="${ly(v)}" stroke="#1f2b40"/>
+    <text x="${L-8}" y="${ly(v)+4}" fill="#6b7d99" font-size="12" text-anchor="end">${v.toFixed(1)}</text>`);
+  s += `<text x="${L+pw/2}" y="${H-10}" fill="#93a4bd" font-size="12.5" text-anchor="middle">p50 step latency (log scale)</text>
+        <text x="16" y="${T+ph/2}" fill="#93a4bd" font-size="12.5" text-anchor="middle" transform="rotate(-90 16 ${T+ph/2})">element accuracy</text>`;
+  const best = PTS.reduce((a,p) => p.y > a.y && p.x < 5 ? p : a, PTS[0]);
+  s += `<rect x="${lx(0.2)}" y="${ly(0.42)}" width="${lx(5)-lx(0.2)}" height="${ly(best.y)-ly(0.42)+14}" fill="#22d3ee08"/>`;
+  PTS.forEach(p => {
+    s += `<circle cx="${lx(p.x)}" cy="${ly(p.y)}" r="${p.s+4}" fill="${p.c}22" stroke="${p.c}" stroke-width="1.6" style="cursor:pointer"/>`;
+    s += `<circle cx="${lx(p.x)}" cy="${ly(p.y)}" r="${p.s}" fill="${p.c}" opacity=".92"/>`;
+  });
+  s += '</svg>';
+  const box = document.getElementById('scatter'); box.innerHTML = s;
+  const tip = document.getElementById('tip');
+  box.querySelectorAll('circle').forEach((c, i) => {
+    const k = Math.floor(i / 2), p = PTS[k];
+    c.addEventListener('mousemove', e => {
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(e.clientX + 14, innerWidth - 240) + 'px';
+      tip.style.top = (e.clientY + 14) + 'px';
+      tip.innerHTML = `<b>${p.n}</b><br><span class="mono">elem ${p.y.toFixed(3)} · p50 ${p.x.toFixed(2)}s</span>`;
+    });
+    c.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  });
+})();
+</script>
+</body>
+</html>

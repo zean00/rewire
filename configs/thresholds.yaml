@@ -1,0 +1,18 @@
+# Operating point from Phase 3 calibration (calibration_v1.md):
+# T=0.5 fitted; conf<0.70 => ~28% escalation on the hard-split test at that T.
+# T is applied INSIDE the runtime gate (raw-threshold gating was measured
+# broken: 89-90% escalation — see headline_records_gateraw_ablation).
+thresholds:
+  confidence_accept: 0.70
+  confidence_low: 0.60
+  margin_min: 0.10
+
+scoring:
+  method: d2
+  d2_alpha: 1.0
+  premask_valid_threshold: 0.05
+  temperature: 0.5
+
+model:
+  generation:
+    max_new_tokens_think: 256

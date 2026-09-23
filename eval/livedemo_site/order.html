@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order confirmed — Aurora Books</title>
+<style>
+  :root { font-family: system-ui, sans-serif; }
+  body { margin: 0; color: #1c2430; background: #faf9f7; }
+  header { background: #22304a; color: #fff; padding: 14px 28px; display: flex; align-items: center; gap: 40px; }
+  header .brand { font-weight: 700; font-size: 1.15rem; }
+  nav { display: flex; gap: 22px; }
+  nav a { color: #dfe6f2; text-decoration: none; font-size: .95rem; }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 1.55rem; margin: 0 0 4px; }
+  .sub { color: #5a6070; margin-bottom: 24px; }
+  section { background: #fff; border: 1px solid #e4e0d8; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  section h2 { margin: 0 0 14px; font-size: 1.05rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  td, th { text-align: left; padding: 8px 4px; border-bottom: 1px solid #eee7db; }
+  td:last-child, th:last-child { text-align: right; }
+  tr.total td { font-weight: 700; border-bottom: none; padding-top: 12px; }
+  .kv { display: grid; grid-template-columns: 150px 1fr; row-gap: 8px; font-size: .95rem; }
+  .kv div:nth-child(odd) { color: #6b7280; }
+  footer { border-top: 1px solid #e4e0d8; padding: 18px 28px; color: #6b7280; font-size: .9rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Aurora Books</div>
+  <nav>
+    <a href="index.html">New Arrivals</a>
+    <a href="index.html">Bestsellers</a>
+    <a href="loyalty.html">Loyalty Rewards</a>
+  </nav>
+</header>
+<main>
+  <h1>Order confirmed</h1>
+  <div class="sub">Order #AUR-24817 · placed September 19, 2026 · a receipt was emailed to hana.mercer@example.com</div>
+  <section>
+    <h2>Items</h2>
+    <table>
+      <tr><th>Item</th><th>Price</th></tr>
+      <tr><td>The Glass Orchard — paperback</td><td>$18.40</td></tr>
+      <tr><td>Maps of Nowhere — hardcover</td><td>$32.00</td></tr>
+      <tr><td>Aurora tote bag</td><td>$14.00</td></tr>
+      <tr><td>Subtotal</td><td>$64.40</td></tr>
+      <tr><td>Shipping</td><td>Free</td></tr>
+      <tr><td>Tax (8.0%)</td><td>$5.15</td></tr>
+      <tr class="total"><td>Total</td><td>$69.55</td></tr>
+    </table>
+  </section>
+  <section>
+    <h2>Delivery</h2>
+    <div class="kv">
+      <div>Arrives</div><div>October 2–6, 2026</div>
+      <div>Ship to</div><div>Hana Mercer · 44 Elm Row, Portland OR 97214</div>
+      <div>Method</div><div>Standard carrier</div>
+    </div>
+  </section>
+  <section>
+    <h2>Payment</h2>
+    <div class="kv">
+      <div>Card</div><div>Visa ending 4417</div>
+      <div>Rewards</div><div>139 points earned on this order</div>
+    </div>
+  </section>
+</main>
+<footer>© 2026 Aurora Books, Portland OR · Questions? Reply to your receipt email.</footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+datasets:
+  toy_mcqa: eval/datasets/toy_mcqa.jsonl
+cells:
+  phase0: [A, B, G, d1, d2]

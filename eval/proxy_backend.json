@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "wire_model": "gemma-4-12b-it",
+  "base_url": "http://127.0.0.1:8998/v1",
+  "model": "gemma-4-12b-it",
+  "timeout_s": 300,
+  "extra_payload": {"reasoning_budget_tokens": 0, "repeat_penalty": 1.1}
+}

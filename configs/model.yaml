@@ -1,0 +1,13 @@
+model:
+  id: "Qwen/Qwen3.5-4B"
+  dtype: "bfloat16"
+  device: "cuda:0"
+  leading_space: false  # candidate tokenization variant — fixed config, never per-call
+
+scoring:
+  premask_valid_threshold: 0.05
+  d2_alpha: 1.0
+
+generation:
+  max_new_tokens_fast: 256   # Baseline A / G
+  max_new_tokens_think: 512  # Baseline B

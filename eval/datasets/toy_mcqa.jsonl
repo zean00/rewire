@@ -1,0 +1,20 @@
+{"id": "toy-001", "domain": "factual", "question": "What is the capital of Australia?", "choices": ["Sydney", "Canberra", "Melbourne", "Perth"], "answer_idx": 1}
+{"id": "toy-002", "domain": "factual", "question": "Which gas do plants primarily absorb for photosynthesis?", "choices": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"], "answer_idx": 2}
+{"id": "toy-003", "domain": "factual", "question": "How many sides does a hexagon have?", "choices": ["Five", "Six", "Seven", "Eight"], "answer_idx": 1}
+{"id": "toy-004", "domain": "factual", "question": "Who wrote the play 'Hamlet'?", "choices": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"], "answer_idx": 1}
+{"id": "toy-005", "domain": "factual", "question": "What is the chemical symbol for gold?", "choices": ["Go", "Gd", "Au", "Ag"], "answer_idx": 2}
+{"id": "toy-006", "domain": "factual", "question": "Which planet is closest to the Sun?", "choices": ["Venus", "Earth", "Mercury", "Mars"], "answer_idx": 2}
+{"id": "toy-007", "domain": "factual", "question": "In which year did World War II end?", "choices": ["1943", "1944", "1945", "1946"], "answer_idx": 2}
+{"id": "toy-008", "domain": "factual", "question": "What is the largest ocean on Earth?", "choices": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"], "answer_idx": 3}
+{"id": "toy-009", "domain": "factual", "question": "Which language has the most native speakers worldwide?", "choices": ["English", "Mandarin Chinese", "Spanish", "Hindi"], "answer_idx": 1}
+{"id": "toy-010", "domain": "factual", "question": "What is the boiling point of water at sea level in Celsius?", "choices": ["90 degrees", "95 degrees", "100 degrees", "110 degrees"], "answer_idx": 2}
+{"id": "toy-011", "domain": "factual", "question": "Which animal is known as the fastest land animal?", "choices": ["Lion", "Cheetah", "Gazelle", "Horse"], "answer_idx": 1}
+{"id": "toy-012", "domain": "factual", "question": "What is the square root of 144?", "choices": ["11", "12", "13", "14"], "answer_idx": 1}
+{"id": "toy-013", "domain": "factual", "question": "Which continent is the Sahara Desert located on?", "choices": ["Asia", "Australia", "Africa", "South America"], "answer_idx": 2}
+{"id": "toy-014", "domain": "factual", "question": "How many players are on the field per team in soccer?", "choices": ["Nine", "Ten", "Eleven", "Twelve"], "answer_idx": 2}
+{"id": "toy-015", "domain": "factual", "question": "What is the primary function of red blood cells?", "choices": ["Fight infection", "Carry oxygen", "Digest food", "Store energy"], "answer_idx": 1}
+{"id": "toy-016", "domain": "factual", "question": "Which element makes up most of Earth's atmosphere?", "choices": ["Oxygen", "Carbon dioxide", "Nitrogen", "Argon"], "answer_idx": 2}
+{"id": "toy-017", "domain": "factual", "question": "Who painted the Mona Lisa?", "choices": ["Michelangelo", "Leonardo da Vinci", "Raphael", "Donatello"], "answer_idx": 1}
+{"id": "toy-018", "domain": "factual", "question": "What is the smallest prime number?", "choices": ["0", "1", "2", "3"], "answer_idx": 2}
+{"id": "toy-019", "domain": "factual", "question": "Which country built the Great Wall?", "choices": ["Japan", "India", "China", "Mongolia"], "answer_idx": 2}
+{"id": "toy-020", "domain": "factual", "question": "What does CPU stand for in computing?", "choices": ["Central Process Unit", "Central Processing Unit", "Computer Personal Unit", "Central Power Unit"], "answer_idx": 1}

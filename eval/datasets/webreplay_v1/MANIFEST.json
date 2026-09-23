@@ -1,0 +1,19 @@
+{
+ "source": "osunlp/Mind2Web (train, first n via streaming)",
+ "built_utc": "2026-09-18T14:04:46.622016+00:00",
+ "n_tasks": 250,
+ "n_items": 1801,
+ "n_cal": 901,
+ "n_test": 900,
+ "max_candidates": 20,
+ "ops": {
+  "CLICK": 1510,
+  "TYPE": 228,
+  "SELECT": 63
+ },
+ "candidate_counts": {
+  "p50": 20,
+  "max": 20
+ },
+ "note": "candidates capped (gold always kept); order shuffled per item with seed=annotation_id"
+}

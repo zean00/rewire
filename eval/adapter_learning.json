@@ -1,0 +1,36 @@
+{
+ "config_version": 1,
+ "enabled": true,
+ "capture": true,
+ "route_to_learned": true,
+
+ "capture_dir": "eval/reports/adapter_capture",
+ "registry_dir": "eval/learned_adapters",
+ "max_capture_bytes_per_session": 2000000,
+ "min_sessions_to_build": 2,
+ "auto_register": true,
+ "min_action_match": 0.8,
+
+ "builder": {
+   "enabled": true,
+   "base_url": "http://127.0.0.1:8999/v1",
+   "model": "qwen35-4b-vanilla-nothink",
+   "api_key": "",
+   "api_key_env": "",
+   "temperature": 0.2,
+   "top_p": 0.9,
+   "max_tokens": 8192,
+   "timeout_s": 900
+ },
+
+ "lint_allowlist": [
+   "open", "click", "type", "select", "choose", "submit", "sort", "add",
+   "go", "next", "previous", "first", "second", "third", "last", "cheapest",
+   "report", "count", "name", "title", "price", "page", "site", "list",
+   "item", "items", "product", "products", "cart", "login", "logout",
+   "form", "field", "username", "password", "button", "link", "dropdown",
+   "scan", "search", "fetch", "read", "write", "run", "get",
+   "the", "then", "and", "into", "from", "with", "value", "option",
+   "widget", "catalog", "catalogue", "record", "records", "entry"
+ ]
+}
