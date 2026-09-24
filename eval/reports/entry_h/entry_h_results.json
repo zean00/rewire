@@ -1,0 +1,146 @@
+{
+ "manifest": {
+  "states_sha256": "8a684a05b05691d171660ed9907f591626307589298336e898016d457e48dd01",
+  "ckpt_sha256": "b2b4a8c9c2d39263eff78a351eb909a342ce9b3bf21a3f07c1d1bf15f1c4eda5",
+  "encoder_precision": "bf16 CPU-offload (pre-committed deviation from registered fp16; 15.9GB card)"
+ },
+ "arms": {
+  "h1_headspace": {
+   "pooled_auroc": 0.7015,
+   "pooled_brier": 0.0807,
+   "pooled_ece10": 0.0113,
+   "per_pair": [
+    {
+     "pair": 1,
+     "auroc": 0.7159,
+     "brier": 0.0814
+    },
+    {
+     "pair": 2,
+     "auroc": 0.4929,
+     "brier": 0.081
+    },
+    {
+     "pair": 3,
+     "auroc": 0.775,
+     "brier": 0.0791
+    },
+    {
+     "pair": 4,
+     "auroc": 0.6796,
+     "brier": 0.0809
+    },
+    {
+     "pair": 5,
+     "auroc": 0.6476,
+     "brier": 0.0814
+    }
+   ],
+   "per_pair_auroc_range": 0.2821,
+   "gate_auroc_ge_075": false,
+   "gate_brier_lt_constant": true,
+   "gate_pass": false
+  },
+  "h1_encoderspace": {
+   "pooled_auroc": 0.591,
+   "pooled_brier": 0.0805,
+   "pooled_ece10": 0.0086,
+   "per_pair": [
+    {
+     "pair": 1,
+     "auroc": 0.6054,
+     "brier": 0.0799
+    },
+    {
+     "pair": 2,
+     "auroc": 0.5724,
+     "brier": 0.0804
+    },
+    {
+     "pair": 3,
+     "auroc": 0.568,
+     "brier": 0.0807
+    },
+    {
+     "pair": 4,
+     "auroc": 0.5125,
+     "brier": 0.0808
+    },
+    {
+     "pair": 5,
+     "auroc": 0.4901,
+     "brier": 0.0808
+    }
+   ],
+   "per_pair_auroc_range": 0.1153,
+   "gate_auroc_ge_075": false,
+   "gate_brier_lt_constant": true,
+   "gate_pass": false
+  },
+  "h2": {
+   "pooled_auroc": 0.9926,
+   "pooled_brier": 0.0957,
+   "pooled_ece10": 0.2431,
+   "fold_selections": [
+    {
+     "outer_fold_te_size": 64,
+     "inner_auroc": {
+      "logreg_C0.01": 0.7684,
+      "logreg_C0.1": 0.783,
+      "logreg_C1.0": 0.9109,
+      "logreg_C10.0": 0.9913,
+      "mlp": 0.9771
+     },
+     "picked": "logreg_C10.0"
+    },
+    {
+     "outer_fold_te_size": 63,
+     "inner_auroc": {
+      "logreg_C0.01": 0.6953,
+      "logreg_C0.1": 0.7285,
+      "logreg_C1.0": 0.9011,
+      "logreg_C10.0": 0.9911,
+      "mlp": 0.9694
+     },
+     "picked": "logreg_C10.0"
+    },
+    {
+     "outer_fold_te_size": 63,
+     "inner_auroc": {
+      "logreg_C0.01": 0.6783,
+      "logreg_C0.1": 0.6974,
+      "logreg_C1.0": 0.8221,
+      "logreg_C10.0": 0.9667,
+      "mlp": 0.9403
+     },
+     "picked": "logreg_C10.0"
+    },
+    {
+     "outer_fold_te_size": 63,
+     "inner_auroc": {
+      "logreg_C0.01": 0.7288,
+      "logreg_C0.1": 0.746,
+      "logreg_C1.0": 0.8406,
+      "logreg_C10.0": 0.9341,
+      "mlp": 0.924
+     },
+     "picked": "logreg_C10.0"
+    },
+    {
+     "outer_fold_te_size": 63,
+     "inner_auroc": {
+      "logreg_C0.01": 0.7834,
+      "logreg_C0.1": 0.8064,
+      "logreg_C1.0": 0.902,
+      "logreg_C10.0": 0.9801,
+      "mlp": 0.9913
+     },
+     "picked": "mlp"
+    }
+   ],
+   "gate_auroc_ge_075": true,
+   "gate_brier_lt_constant": false,
+   "gate_pass": false
+  }
+ }
+}
