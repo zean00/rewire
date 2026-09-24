@@ -1,0 +1,89 @@
+{
+ "inputs": {
+  "v3_emb_sha256": "416cc76a6c6bc47ad5f832a66bdfd011b5004c3d75ff15285f9b1aae72d0db55",
+  "v3_states_sha256": "8a684a05b05691d171660ed9907f591626307589298336e898016d457e48dd01",
+  "folds_sha256": "fe061388aed5fe8a14e4451d1bed329ac0db3acca0246b46971c526ded2eb18a",
+  "v4_states_sha256": "4aa4538765304851dcb1c9595acb937b52cc20b21574774c1177ca469f63d233"
+ },
+ "fresh_pool": {
+  "n": 290,
+  "positives": 32,
+  "base_rate": 0.1103,
+  "constant_brier": 0.0982
+ },
+ "frozen_readout": {
+  "ranker": "logreg C=10 balanced on all 316 v3 states",
+  "platt": "unpenalized 1-D logistic on frozen-fold oof scores"
+ },
+ "fresh": {
+  "pooled_auroc": 0.9889,
+  "pooled_brier": 0.0374,
+  "calibration_deciles": [
+   {
+    "bin": 0,
+    "n": 255,
+    "mean_p": 0.0044,
+    "freq_y": 0.0078
+   },
+   {
+    "bin": 1,
+    "n": 3,
+    "mean_p": 0.1598,
+    "freq_y": 1.0
+   },
+   {
+    "bin": 2,
+    "n": 0,
+    "mean_p": null,
+    "freq_y": null
+   },
+   {
+    "bin": 3,
+    "n": 4,
+    "mean_p": 0.3466,
+    "freq_y": 0.75
+   },
+   {
+    "bin": 4,
+    "n": 8,
+    "mean_p": 0.4223,
+    "freq_y": 0.875
+   },
+   {
+    "bin": 5,
+    "n": 0,
+    "mean_p": null,
+    "freq_y": null
+   },
+   {
+    "bin": 6,
+    "n": 0,
+    "mean_p": null,
+    "freq_y": null
+   },
+   {
+    "bin": 7,
+    "n": 0,
+    "mean_p": null,
+    "freq_y": null
+   },
+   {
+    "bin": 8,
+    "n": 6,
+    "mean_p": 0.8204,
+    "freq_y": 1.0
+   },
+   {
+    "bin": 9,
+    "n": 14,
+    "mean_p": 0.9853,
+    "freq_y": 0.7857
+   }
+  ]
+ },
+ "gate": {
+  "auroc_ge_075": true,
+  "brier_lt_constant": true,
+  "gate_pass": true
+ }
+}

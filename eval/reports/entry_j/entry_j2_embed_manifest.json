@@ -1,0 +1,33 @@
+{
+ "states_sha256": "4aa4538765304851dcb1c9595acb937b52cc20b21574774c1177ca469f63d233",
+ "ckpt_sha256": "b2b4a8c9c2d39263eff78a351eb909a342ce9b3bf21a3f07c1d1bf15f1c4eda5",
+ "encoder_snapshot": "b968826d9c46dd6066d109eabc6255188de91218",
+ "logit_scale": 100.8111343383789,
+ "encoder_precision": "bf16 CPU-offload (pre-committed deviation from registered fp16; 15.9GB card)",
+ "pooling": "last-token, left-truncated to 2048, L2-normalized",
+ "pairs": [
+  [
+   "The agent completed the task successfully.",
+   "The agent failed the task."
+  ],
+  [
+   "The task's success condition was met.",
+   "The task's success condition was not met."
+  ],
+  [
+   "The session ended with a correct final result.",
+   "The session ended with an incorrect result or no result."
+  ],
+  [
+   "The goal was achieved.",
+   "The goal was not achieved."
+  ],
+  [
+   "Everything the task asked for was done correctly.",
+   "Something the task asked for was done wrong or left undone."
+  ]
+ ],
+ "n_states": 290,
+ "determinism_recheck_bitexact": true,
+ "wall_s": 101.31
+}
