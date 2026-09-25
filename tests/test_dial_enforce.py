@@ -173,3 +173,29 @@ def test_score_math_matches_readout_shape(dial):
     p, nrm = D.score("whatever")
     assert p == pytest.approx(1.0 / (1.0 + math.exp(-4.0)))
     assert nrm == pytest.approx(4.0)
+
+
+def test_load_remote_passes_dial_block(tmp_path):
+    # Regression (v3.17.0 launch): load_remote built an allowlisted dict and
+    # dropped the dial block, so the startup banner read "enforce dial:
+    # disabled" with the config saying enabled — the v3.14.0 dropped-key
+    # launch bug, one layer over. The banner gate caught it before any
+    # session; this test pins the pass-through. omp_proxy imports torch at
+    # module level, so it skips on the torch-less laptop and runs on the host.
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("omp_proxy imports torch at module level")
+    spec = importlib.util.spec_from_file_location(
+        "omp_proxy_load_remote",
+        Path(__file__).resolve().parents[1] / "proxy" / "omp_proxy.py")
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    cfg = {"enabled": True, "wire_model": "gemma-4-12b-it",
+           "base_url": "http://127.0.0.1:8997/v1", "model": "gemma-4-12b-it",
+           "chain": True, "completion_review": {"enabled": False},
+           "dial": {"enabled": True, "readout": "ro.json", "cap": 2}}
+    f = tmp_path / "backend.json"
+    f.write_text(json.dumps(cfg))
+    r = M.load_remote(str(f))
+    assert r["dial"] == cfg["dial"]
+    assert r["completion_review"] is None  # disabled block stays absent
+    assert r["chain"] is True

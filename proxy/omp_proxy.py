@@ -269,6 +269,11 @@ def load_remote(path) -> dict | None:
         # measured 77% detection on false success reports but 32% false
         # alarms on correct ones, so the gate never starts on.
         "completion_review": _review_cfg(cfg.get("completion_review")),
+        # (v3.17.0) the enforce dial's block passes through raw — dial_enforce
+        # .init() owns the enabled check; dropped here it would read as
+        # "dial disabled" with the config saying enabled (the v3.14.0
+        # dropped-key launch bug, one layer over)
+        "dial": cfg.get("dial"),
         }
     except Exception as e:
         print(f"backend config unreadable ({e!r}); remote arm disabled", flush=True)

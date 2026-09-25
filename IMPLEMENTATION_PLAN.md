@@ -1664,3 +1664,49 @@ Conclusion: enforce mode needs **one combined server** — the pinned gen line p
 `llama-server -m hybrid-qwen/models/gemma-4-12b-it-nvfp4.gguf --jinja --embeddings --pooling last -c 65536 -ngl 99 --flash-attn on -b 1024 -ub 512 --host <tailscale-ip> --port 8997` — the pinned gen line MINUS `-ctk q8_0 -ctv q8_0` PLUS `--embeddings --pooling last`; 10,506 MiB card total measured; film-worker (:8998) and 4B proxy (:8999) untouched.
 
 **Still open before the v6 sweep (launch checklist):** `run_v6.py` (mechanical v5 delta: fresh CSPRNG seed drawn at launch before session 1, v1–v5 seeds excluded, fresh v6 output paths); the v6 backend config with the `dial` block enabled and `completion_review` off (the words-based min-of-three review has no earned role in v6); scp the code + plan to the host; launch smoke on the host's own loopback; then the sweep.
+
+### 2026-09-26 — ENTRY N LAUNCH: the v6 sweep is FROZEN and going live. Seeds drawn (CSPRNG, before any session), runner written and diff-verified, config live on the host; the launch sequence below executes in order, and any crash-fix is disclosed here before any metric.
+
+**Frozen at launch (before session 1):**
+
+- **`eval/reports/entry_n/run_v6.py`** — mechanical v5 delta, verified by diff against run_v5.py (the only differing lines are the four deltas): docstring; `SEED_RNG = 7860625291` (CSPRNG-drawn 2026-09-26 at launch, before any session); throwaway sanity seed `4468567297` (same rule); `existing_seeds()` now also excludes every seed in `/tmp/mw_bench/main_v5.jsonl` (so v1–v5 are all excluded — plan mode therefore read all five ledger files and ran clean); fresh paths `main_runs_v6` / `sanity_runs_v6` / `main_v6.jsonl` / `main_v6.jsonl.cdp`. Task list, prompt, arm (`chain`), model string (`poc-proxy-12b/gemma-12b-decide`), caps, and CDP collection are byte-identical to v5. The runner runs ON THE LAPTOP (local omp + local Chromium + page server :8077); enforcement lives in the host sweep proxy, transparent to this runner.
+- **v6 backend config, ON THE HOST ONLY** (`/home/sahal/hybrid-qwen/eval/proxy_chain_remote_v6.json`; not committed — like every sweep chain config before it; contains the tailscale IP): created programmatically from the frozen v5 config (`proxy_chain_remote_review.json`) with exactly three mutations — `base_url` → the combined server (`…:8997/v1`); `completion_review` → `{"enabled": false}` (the words-based min-of-three review has no earned role in v6); and the registered `dial` block (`enabled: true`, `readout: "eval/reports/entry_l/entry_k_readout.json"` — sha re-verified on the host at launch = c840ba54…, `embeddings_url` = the combined server, `embed_model: "gemma-4-12b-it"`, `cap: 2`, `timeout_s: 60`). Every other key byte-identical to v5 (chain on, `chain_model: "gemma-12b-decide"`, `chain_gates: "configs/webgate_remote.json"` 0.337/1.0/0.3, wire_model, timeout 300, extra_payload).
+- **Launch lines.** Combined server (host): the registered line of the implementation note above (full-KV, `--embeddings --pooling last`, bound on the tailscale IP :8997). Sweep proxy (host, from `/home/sahal/hybrid-qwen`): `ulimit -n 65535 && nohup ~/hybrid-env/bin/python eval/omp_proxy.py --port 8990 --backend-config eval/proxy_chain_remote_v6.json --no-local-model >> eval/reports/omp_arms/proxy_v6.log 2>&1 < /dev/null &` — startup banner MUST print `enforce dial: enabled tau=0.326134 cap=2 dim=3840 …` or nothing launches. Sweep (laptop): sanity = `python3 eval/reports/entry_n/run_v6.py sanity` (throwaway seed, own output files, not part of the pool); sweep = `nohup python3 eval/reports/entry_n/run_v6.py sweep > /tmp/mw_bench/sweep_v6.log 2>&1 &` (168 sessions, resumable by tag). Launch-gate order: combined server up → 4-gate `smoke_instrument.py` passes → proxy banner verified → sanity session → sweep.
+- **Audit paths.** Dial decisions: host `eval/reports/omp_arms/decisions.jsonl` (records with arm `dial-enforce`: routed, p, tau, claim_event, first_claim, evidence_sha12, vec_norm, wall_ms). Sweep rows: laptop `/tmp/mw_bench/main_v6.jsonl` (+ `.cdp` sidecar); transcripts under `/tmp/mw_bench/main_runs_v6/`.
+
+**The frozen seed plan (printed in full before session 1; 24 tasks × 7 seeds = 168 sessions, every seed 10-digit and disjoint from v1–v5):**
+
+```
+click-button [2001272834, 5303219941, 4287351161, 7231159858, 1074637615, 5499824364, 6615572066]
+click-button-sequence [1783101445, 7225895503, 7302316137, 3655364558, 3289693168, 5884232722, 5898421780]
+click-checkboxes [8297688984, 5024756066, 3006761040, 7770723869, 1168188449, 8970270607, 8108205670]
+click-collapsible [7507644517, 5377164443, 7842484494, 7737492833, 2286302966, 2405834409, 5025480837]
+click-dialog [3753990303, 2669271760, 7422691842, 3134496785, 3323838216, 4721927165, 4648534041]
+click-link [3727026829, 7560576439, 4260375335, 9399605514, 5188400579, 1959012049, 6582155266]
+click-option [1137172370, 1152006669, 6355499134, 5658721012, 2330414699, 9612136759, 5386201272]
+click-tab [4513594298, 5896591028, 1037011307, 3569801014, 8163212595, 1238890961, 6437694098]
+click-tab-2 [8461574643, 6637960538, 3940297399, 2444438687, 5627066736, 5717143800, 5306155821]
+click-test [6882944282, 8182136586, 9732697393, 1730802993, 8977036626, 8213510113, 6419818242]
+click-widget [3716024230, 1525791743, 9429727817, 1710362423, 8952343202, 1777793311, 9324780095]
+enter-date [2319202482, 1574249620, 1262766518, 5067861180, 9278815104, 7027251762, 4202653839]
+enter-password [1919037465, 9069716484, 9198725142, 5903702025, 8616314291, 8663417878, 2759284565]
+enter-text [2232542479, 3622157430, 3675653648, 4659268271, 1390520559, 9937089374, 7399584095]
+enter-text-2 [2973237169, 9160823385, 8499660964, 5854009180, 3585945291, 8683117558, 8067035707]
+focus-text [6591225232, 8702820218, 7964058608, 2915877324, 6195755781, 6423652398, 4196027327]
+focus-text-2 [5814044368, 5689309197, 4141219620, 1132780189, 1928492492, 5987534859, 5249522374]
+form-sequence [4485018797, 4084120346, 8982705189, 5422583772, 6975647041, 5678048432, 9422273900]
+login-user [3636741586, 6261148829, 7559481577, 7997957921, 6922560670, 4995368602, 3246562341]
+login-user-popup [5116664812, 2531188179, 3671595271, 7760316834, 4590508774, 1585188129, 3682682872]
+navigate-tree [6743431197, 2105323146, 8673599732, 7941465984, 6116596908, 4708658775, 7053894781]
+read-table [8946154149, 8879175709, 9818403282, 2540742733, 7795388114, 5901784397, 1841635507]
+search-engine [3428613230, 7767940733, 3249941792, 3830211969, 6468160640, 1620916199, 7207163441]
+use-autocomplete [6416102956, 3121216199, 2393282810, 9194169206, 9874577382, 8121547466, 7533051196]
+```
+
+**Pre-launch host state (verified 2026-09-26):** ports 8990/8997 free; host readout sha matches the pin; `eval/chain_http.py` and `configs/webgate_remote.json` in place; the host `eval/omp_proxy.py` was the Sep 22 build — synced to v3.17.0 together with `eval/dial_enforce.py` in this launch, before the proxy starts.
+
+**Launch fix (disclosed before any session, 2026-09-26):** the first proxy start FAILED the pre-registered banner gate — it printed `enforce dial: disabled (dial block absent or enabled:false)` with the config on disk saying enabled. Cause: `load_remote()` builds an allowlisted dict and silently dropped the `dial` block (the v3.14.0 dropped-key launch bug, one layer over). Nothing served a session in that state — the gate held. Fix: the block passes through raw (`"dial": cfg.get("dial")` in `load_remote`), pinned by a boundary regression test (`tests/test_dial_enforce.py::test_load_remote_passes_dial_block`; torch-guarded, so it skips on the torch-less laptop — the boundary itself verified directly on the host; suite 13 pass + 1 skip). Proxy killed by ps-verified PIDs, relaunched from the fixed file: banner now `enforce dial: enabled tau=0.326134 cap=2 dim=3840 readout=eval/reports/entry_l/entry_k_readout.json embeddings=<tailscale-ip>:8997`, `/health` ok.
+
+**Sanity session (2026-09-26, seed 4468567297 — throwaway, outside the frozen plan):** clean end-to-end through the live chain: page task `click-button` done at ~17 s (raw 1, fin 0.9416), collector attached in ~3 s, 30+ proxy turns at normal latency, no 5xx. omp ran to the harness cap (exit 124, wall 480) with the model re-clicking the completed target — the IDENTICAL shape to v5's own sanity row (exit 124, wall 480, raw 1) and to 55/168 v5 sweep sessions (cap-exits, several scoring raw 1). No completion claim was made, so the dial never fired (zero `dial-enforce` records — claim-free sessions are outside its jurisdiction; the harness cap and page reward decide truth exactly as in v5). The enforce path's first live fires happen inside the sweep, where entry-L's pool predicts ~140/168 sessions make claims. Sweep launching now against the frozen plan above.
+
+**First live dial sequence (monitoring note, session 1 = click-button s2001272834, 2026-09-26 — descriptive, NOT the adjudication):** the enforce dial's first live fire ran the full registered D2 sequence: first completion claim scored p=0.187 < τ* → VETO (episode continued, note with no score/threshold); re-claim over an unchanged evidence block (same sha12) → VETO 2; third sub-τ claim → CAP-TERMINATE (claim shipped, page reward decides truth); post-cap claim-shaped answers ship logged as cap-terminate (no silent sub-τ pass), non-claim prose passes logged as outside-jurisdiction; per-claim instrument cost 1.5–6 s. Session page reward: raw=1 — the task was done, so the ev-1 veto is a dial false reject on a true success state (the entry-L pool's fn class); counting that cost on the fresh pool is exactly entry N's Q1/Q4 job at adjudication. First claims flagged; post-veto states stay out of any accuracy number.
