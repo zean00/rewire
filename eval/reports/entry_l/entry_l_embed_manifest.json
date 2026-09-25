@@ -1,0 +1,12 @@
+{
+ "server": "llama-server -m hybrid-qwen/models/gemma-4-12b-it-nvfp4.gguf --alias gemma-4-12b-it --host 127.0.0.1 --port 8998 --embedding --pooling last -c 32768 -np 4 -ngl 99 --flash-attn on -b 1024 -ub 512",
+ "endpoint": "POST /v1/embeddings, input = raw completion-claim state block verbatim",
+ "client": "one text per POST, strictly serial (entry-K standing instrument rule)",
+ "dim": 3840,
+ "n": 140,
+ "positives": 26,
+ "states_sha256": "a4d464baa8644a79bcd5d5f38c56906a9a3a1bc42a0060a6ed3cb662d6addd89",
+ "embd_normalize": "server default (euclidean/L2)",
+ "wall_s": 21.16,
+ "determinism_recheck_bitexact": true
+}

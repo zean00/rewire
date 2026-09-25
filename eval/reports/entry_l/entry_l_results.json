@@ -1,0 +1,38 @@
+{
+ "gate": {
+  "fresh_auroc": 0.9011,
+  "fresh_brier": 0.0861,
+  "constant_brier": 0.1512,
+  "base_rate": 0.1857,
+  "gate_auroc_ge_075": true,
+  "gate_brier_lt_constant": true,
+  "gate_pass": true
+ },
+ "operating_point_tau": {
+  "tau": 0.3261337492932296,
+  "tp": 14,
+  "fp": 1,
+  "tn": 113,
+  "fn": 12,
+  "accept_precision": 0.9333,
+  "reject_tpr": 0.5385,
+  "false_reject_rate": 0.0088
+ },
+ "ece10": 0.0852,
+ "pool": {
+  "n": 140,
+  "positives": 26,
+  "manifest": {
+   "server": "llama-server -m hybrid-qwen/models/gemma-4-12b-it-nvfp4.gguf --alias gemma-4-12b-it --host 127.0.0.1 --port 8998 --embedding --pooling last -c 32768 -np 4 -ngl 99 --flash-attn on -b 1024 -ub 512",
+   "endpoint": "POST /v1/embeddings, input = raw completion-claim state block verbatim",
+   "client": "one text per POST, strictly serial (entry-K standing instrument rule)",
+   "dim": 3840,
+   "n": 140,
+   "positives": 26,
+   "states_sha256": "a4d464baa8644a79bcd5d5f38c56906a9a3a1bc42a0060a6ed3cb662d6addd89",
+   "embd_normalize": "server default (euclidean/L2)",
+   "wall_s": 21.16,
+   "determinism_recheck_bitexact": true
+  }
+ }
+}
