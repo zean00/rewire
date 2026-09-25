@@ -260,6 +260,7 @@
   <a class="nl" href="#evidence">Evidence</a>
   <a class="nl" href="#wild">In the wild</a>
   <a class="nl" href="#ledger">Honest ledger</a>
+  <a class="nl" href="#dial">The dial</a>
   <a class="nl" href="#next">Verdict</a>
   <a class="nl" href="#future">The future</a>
 </nav>
@@ -267,7 +268,7 @@
 <!-- ============================== HERO ============================== -->
 <header class="hero">
   <div class="wrap">
-    <div class="badge">Rewire · a 7-day proof, Sep 2026 · one frozen open model</div>
+    <div class="badge">Rewire · a 7-day proof + a verifier dial · Sep 2026 · one frozen open model</div>
     <h1><span class="g">Rewire</span></h1>
     <div class="tagline">We didn't retrain the model. We didn't touch the engine.<br>We added one layer between them — and suddenly the model had reflexes.</div>
     <p class="sub">Rewire is our answer to <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noopener">System One Jev</a>: instead of building a new fast-decision AI, or copying one, we <b>wired a fast, grounded "pointing" reflex directly into an existing LLM</b> — as a layer between the inference engine and its OpenAI-compatible API. The weights stay frozen. The engine stays untouched. Only the wiring changes.</p>
@@ -318,6 +319,7 @@
       <div class="stat"><div class="v"><span data-count="5" data-dec="0">0</span><small>/5 vs 0/5</small></div><div class="l">live agent tasks: rewired vs vanilla, same model</div></div>
       <div class="stat"><div class="v"><span data-count="60" data-dec="0">0</span><small>×</small></div><div class="l">slower to think than to point: 17.29 s vs 0.29 s on identical decisions</div></div>
       <div class="stat"><div class="v"><span data-count="316" data-dec="0">0</span></div><div class="l">pre-registered probe reads over 168 agent episodes</div></div>
+      <div class="stat"><div class="v"><span data-count="0.90" data-dec="2">0</span></div><div class="l">verifier-dial AUROC on 168 fresh sessions it never saw (bar: 0.75)</div></div>
       <div class="stat"><div class="v"><span data-count="7" data-dec="0">0</span></div><div class="l">days from idea to a fully adjudicated verdict</div></div>
     </div>
 
@@ -325,7 +327,8 @@
       <span class="chip good">✓ offline wins replicated &amp; significant</span>
       <span class="chip good">✓ live: 0/5 → 5/5 with one URL change</span>
       <span class="chip">◐ hardest benchmark: an honest tie — and we know exactly why</span>
-      <span class="chip">✗ model self-verification: measured, didn't work, documented</span>
+      <span class="chip">✗ asking the model in words: no signal — measured five ways</span>
+      <span class="chip good">✓ reading its state vectors: 0.90 AUROC on fresh sessions — the dial ships</span>
     </div>
   </div>
 </header>
@@ -549,7 +552,7 @@
       </div>
     </div>
 
-    <h3>The journey, in seven eras</h3>
+    <h3>The journey, in eight eras</h3>
     <div class="timeline">
       <div class="titem reveal"><div class="tphase">Era 1 · the router</div><h4>Discovery: reading beats asking</h4><p>500-question shoot-out. Reflex-with-escape-hatch 0.856 @ 0.26 s; think-always 0.490 @ 17.29 s. The thesis is born.</p></div>
       <div class="titem reveal"><div class="tphase">Era 2 · web actions</div><h4>The reflex generalizes to real pages</h4><p>Gated re-read chain 0.356 vs 0.258 no-think (p ≈ 8×10⁻⁹). Batched reads make it 5× faster.</p></div>
@@ -557,7 +560,8 @@
       <div class="titem reveal"><div class="tphase">Era 4 · live</div><h4>From replay to reality</h4><p>Staged live sites: 0.85–0.95 across metrics; the gate ranks its own mistakes perfectly. Then the real harness: <b>vanilla 0/5 → rewired 5/5</b> on the same model.</p></div>
       <div class="titem v reveal"><div class="tphase">Era 5 · the verifier</div><h4>We pre-registered a gate for the model to check its own work. It failed. On schedule.</h4><p>168 agent episodes, 316 frozen probes across three one-pass experiments (binary, rubric, K=5 paraphrase framings). Verdict: reads carry no outcome signal. Falsified cleanly, by design.</p></div>
       <div class="titem v reveal"><div class="tphase">Era 6 · the forensics</div><h4>Why the hardest benchmark tied — down to the exact line</h4><p>Autopsy of 147 failed episodes: 55 ended while the scoreline "Last reward: −1" was visibly on screen. The failure isn't reasoning; it's <b>reward-blindness</b>. A one-line regex gate catches all 55 — with zero false stops.</p></div>
-      <div class="titem reveal"><div class="tphase">Era 7 · the verdict</div><h4>The chain earns its complexity where signal exists — and says so where it doesn't</h4><p>Strategic decision recorded, with a written bar for revisiting every suspended piece. See the verdict below.</p></div>
+      <div class="titem reveal"><div class="tphase">Era 7 · the verdict</div><h4>The chain earns its complexity where signal exists — and says so where it doesn't</h4><p>Strategic decision recorded, with a written bar for revisiting every suspended piece: <span class="mono">AUROC ≥ 0.75 AND Brier under the constant</span>, on fresh sessions. See the verdict below.</p></div>
+      <div class="titem v reveal"><div class="tphase">Era 8 · the reversal</div><h4>Inspired by a public verifier (CLM), the state-vector dial cleared the frozen bar — live</h4><p>Five read families had failed the bar. The sixth — a tiny calibrated head over frozen encoder state vectors — went 0.9889 on a second encoder, 0.8867 on the chain's own backbone, then <b>0.9011 on 168 brand-new sessions it had never seen</b>. GATE PASSED. The dial ships. <a href="#dial">The full ladder ↓</a></p></div>
     </div>
   </div>
 </section>
@@ -621,6 +625,7 @@
         <span class="tag red">falsified</span>
         <h4>Self-verification reads</h4>
         <p>Can the reflex tell a passing episode from a failing one? No. Across 316 probes: detecting a pass at 88.8% cost 83.3% false alarms. Calibration: <b>worse than a coin that always says "fail"</b> (AUROC 0.51–0.57; high-confidence tail: predicted ≥80% → 16.7% actual; ≥90% → 0%).</p>
+        <p>True — for reads over the model's <i>words</i>. Two days later the same written bar was cleared by reading its <i>state vectors</i> instead. <a href="#dial">The dial ↓</a></p>
       </div>
       <div class="card reveal">
         <span class="tag red">falsified</span>
@@ -658,17 +663,66 @@
       <span class="pill">every deviation disclosed in the ledger</span>
       <span class="pill">blind adjudication from transcripts, never exit codes</span>
     </div>
-    <p class="foot" style="margin-top:10px">Full audit trail: a 1,300-line experiment ledger (IMPLEMENTATION_PLAN.md), the raw report (poc_report.html), and the structured conclusion (POC_CONCLUSION.md) — all in the repo.</p>
+    <p class="foot" style="margin-top:10px">Full audit trail: a 1,600-line experiment ledger (IMPLEMENTATION_PLAN.md), the raw report (poc_report.html), and the structured conclusion (POC_CONCLUSION.md) — all in the repo.</p>
+  </div>
+</section>
+
+<!-- ============================== THE DIAL ============================== -->
+<section id="dial">
+  <div class="wrap">
+    <div class="kicker">Act IV — the plot twist</div>
+    <h2>Then the bar that killed every read was cleared</h2>
+    <p class="lead">Two days after the verdict, a public project reframed the question. <a href="https://github.com/Contrastive-LM/CLM" target="_blank" rel="noopener">Contrastive-LM's CLM</a> verifies agents with a frozen LLM encoder and tiny trained heads — matching <b>state vectors</b>, never asking the model to write a verdict. We imported the idea, not the checkpoint, and pointed it at this project's frozen bar: <span class="mono">AUROC ≥ 0.75 AND Brier under the constant predictor</span>, pre-registered, one pass, on fresh sessions.</p>
+
+    <div class="grid2">
+      <div class="card reveal">
+        <span class="tag red">what failed — five times</span>
+        <h4>Asking the model in words</h4>
+        <p>"Is this episode passing?" — as a prompt, a rubric, or a trained contrastive head fed by phrasing-sensitive margins. Words can be talked into things: rewording moved the reads ~10× more than the outcomes did. The fifth family (CLM's own heads) ranked brilliantly and calibrated terribly — the conjunction gate caught it, exactly as designed.</p>
+      </div>
+      <div class="card edge reveal">
+        <span class="tag green">what passed</span>
+        <h4>Reading where its state lands</h4>
+        <p>At the moment the agent claims "done", embed the evidence block it just acted on — <b>verbatim, no question attached</b> — through the engine's stock embeddings API, and score where that thought landed: <span class="mono">p = σ(a·(w·x+b)+c)</span>. 3,840 weights, two Platt scalars, one threshold. No second model. No sklearn in the serving path. One dot product.</p>
+      </div>
+    </div>
+
+    <h3>The ladder, in five pre-registered rungs</h3>
+    <style>.tblwrap.dialtab td,.tblwrap.dialtab th{white-space:normal}.tblwrap.dialtab td:first-child{white-space:nowrap}</style>
+    <div class="tblwrap dialtab"><table>
+      <thead><tr><th>rung</th><th>question</th><th>fresh-pool result</th><th>gate</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">H</td><td>CLM's off-the-shelf contrastive heads, zero-shot</td><td>ranking 0.59–0.99 · calibration FAIL (ECE 0.24, Brier over constant)</td><td class="worst">✗</td></tr>
+        <tr><td class="mono">J</td><td>frozen Qwen3-8B encoder + our 2-parameter recalibration head</td><td class="mono"><span class="best">AUROC 0.9889 · Brier 0.0374</span> (constant 0.0982)</td><td class="best">✓ earned</td></tr>
+        <tr><td class="mono">K</td><td>same recipe, the chain's own Gemma-12B via its embeddings API</td><td class="mono"><span class="best">0.8867 · 0.0653</span> — zero second-model VRAM</td><td class="best">✓</td></tr>
+        <tr class="hl"><td class="mono">L</td><td>live confirmation: 168 brand-new sessions, dial frozen before the sweep</td><td class="mono"><span class="best">0.9011 · 0.0861</span> (constant 0.1512)</td><td class="best">✓ ships</td></tr>
+        <tr><td class="mono">M</td><td>is 4-bit quantization the gap?</td><td class="mono">Q4: 0.9868 · 0.0344 ≈ bf16 0.9889 — <span class="best">quantization exonerated</span></td><td>attribution</td></tr>
+      </tbody>
+    </table></div>
+    <p class="foot">Every rung pre-registered against the same written bar; every embedding pass carries a bit-exact determinism recheck; "fresh" always means sessions the dial's training never touched. Full chain of custody in the ledger, entries H–M.</p>
+
+    <div class="callout win">
+      <b>What the dial does at its frozen operating point</b> (140 fresh completion claims): when it accepts a "done" claim it is right <b class="mono">93.3%</b> of the time, and it catches <b class="mono">113 of 114</b> false completion claims — <b class="mono">99.1%</b>. The cost, stated plainly: at that threshold it also sends back <b class="mono">46%</b> of genuine completions as unverified — a conservative corner, and a policy dial (τ), not a defect. Rebalancing it is a new pre-registered decision, like everything else here.
+    </div>
+
+    <details class="dr reveal">
+      <summary>For the engineers — the readout, the instrument rules, and what entry M settled</summary>
+      <div class="inner">
+        <p><b>Readout.</b> Last-token-pooled, L2-normalized 3,840-d embedding of the completion-claim evidence block (goal lines + page snapshot — the same block the rubric reviewer read), scored by a logistic head plus Platt map exported as pure JSON data (3,840 weights + b + a + c + τ = 0.3261). Serve cost ≈ 95 ms per claim through the engine's stock <span class="mono">/v1/embeddings</span> — the dial rides the serving engine itself.</p>
+        <p><b>Instrument rules, learned the hard way.</b> Batched multi-input embedding requests on this server build return position-dependent vectors (the same text alone vs inside a batch differs by up to cos 0.87) — so the standing rule is one text per request, strictly serial. And the repeat-request determinism needed for entry M's attribution took three stacked fixes in a local diagnostic build (slot LCP KV keep, CUDA-graph capture-vs-replay, allocator growth churn), each diagnosed to source level, fixed, and revalidated bit-exact <i>before any metric existed</i>. The shipped dial needs none of that machinery — it just follows the one-text-per-request rule.</p>
+        <p><b>Entry M.</b> Qwen3-8B at ~4.8 bits through the same serving stack lands within noise of bf16 (0.9868 vs 0.9889 AUROC): weight precision and the numerics stack are exonerated — the gap between 0.89 (Gemma's vectors) and 0.99 (Qwen's) is the backbone's own representation. Any stronger open-weights encoder can now drop in behind the same recipe and the same frozen bar.</p>
+      </div>
+    </details>
   </div>
 </section>
 
 <!-- ============================== VERDICT ============================== -->
 <section id="next">
   <div class="wrap">
-    <div class="kicker">Act IV — the verdict</div>
+    <div class="kicker">Act V — the verdict</div>
     <div class="verdict reveal">
-      <div class="q">"The reflex works wherever the task hands it a real signal — choices, candidates, rankings — and it delivers those wins at <span class="g">1/60th the latency and zero hallucination surface</span>. Asked to divine things it was never shown, it fails — and now we know exactly where that line sits, to the decimal."</div>
-      <div class="who">— the PoC's recorded verdict, Sep 2026</div>
+      <div class="q">"The reflex works wherever the task hands it a real signal — choices, candidates, rankings — and it delivers those wins at <span class="g">1/60th the latency and zero hallucination surface</span>. Asked to divine things it was never shown, it fails — and now we know exactly where that line sits, to the decimal. And when the line mattered most, we found the way across it: not in the model's words, but in its state."</div>
+      <div class="who">— the recorded verdict, Sep 2026</div>
     </div>
 
     <h3>So: does the chain earn its complexity?</h3>
@@ -690,9 +744,9 @@
         <p>Rewired chain + mechanical gates <i>vs</i> vanilla + prompt fixes alone, same tasks, pre-registered. If vanilla with good prompts matches the chain, the chain must shrink. We suspect it won't — but the experiment, not the suspicion, decides.</p>
       </div>
       <div class="card reveal">
-        <span class="tag amber">suspended, with a bar</span>
-        <h4>LLM self-verification reads</h4>
-        <p>Reinstated only when a read beats a written bar on held-out sessions: <b>AUROC ≥ 0.75 and Brier better than the constant predictor</b>. The bar is public, frozen, and waiting.</p>
+        <span class="tag green">bar written → bar met</span>
+        <h4>Self-verification, by a different instrument</h4>
+        <p>The written bar — <b>AUROC ≥ 0.75 and Brier better than the constant predictor</b> — killed five read families. The state-vector dial cleared it on fresh sessions (<span class="mono">0.9011 / 0.0861 vs 0.1512</span>) and now ships as the GATE's completion-claim verifier. The discipline never bent; the instrument changed.</p>
       </div>
     </div>
   </div>
@@ -701,7 +755,7 @@
 <!-- ============================== FUTURE ============================== -->
 <section id="future">
   <div class="wrap">
-    <div class="kicker v">Act V — where this goes</div>
+    <div class="kicker v">Act VI — where this goes</div>
     <h2>The layer is a provocation</h2>
     <p class="lead">Rewire proves the reflex can live in the wiring. The provocative question it leaves behind: <b>what if the architecture wanted it there all along?</b></p>
 
@@ -740,6 +794,16 @@
         <p>The regex beat the neurons. Generalize it: an inventory of deterministic harness signals (scorelines, timers, error states) wired as hard gates — with model reads spent only on the residual they can't see.</p>
       </div>
       <div class="card reveal">
+        <span class="tag green">next wire</span>
+        <h4>Enforce mode</h4>
+        <p>Today the dial verifies; next it steers. A rejected completion claim re-opens the episode — with the reject policy, retry cap, and escalation path frozen in a pre-registration before it goes live. The harness-floor regex and the dial become one gate stack.</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag cyan">measured headroom</span>
+        <h4>Stronger encoders, same recipe</h4>
+        <p>Entry M showed the dial is backbone-agnostic and quantization-proof (Q4 ≈ bf16). The gap between 0.89 (Gemma's vectors) and 0.99 (Qwen's) is representation — and representation is swappable. Any stronger open-weights encoder drops in behind the same frozen bar.</p>
+      </div>
+      <div class="card reveal">
         <span class="tag amber">a standard worth existing</span>
         <h4>The Rewire contract</h4>
         <p>The layer already speaks plain OpenAI-compatible HTTP. The endpoint could become a spec: <span class="mono">/v1/decide</span> — candidates in, typed decision + calibrated confidence out, <span class="mono">abstain</span> as a legal answer. Any harness, any engine, one wire.</p>
@@ -747,21 +811,22 @@
     </div>
 
     <div class="callout note">
-      <b>The one-line version:</b> Jev showed the industry a new kind of fast, grounded AI. The open-source wave raced to copy it. Rewire wired it <i>into</i> the model everyone already has — and the 7-day verdict is: the wiring works wherever there's real signal, the model's self-judgment doesn't, the harness floor was the real boss fight, and the next move (decide as a native sense, trained into the architecture) now has a written spec, a frozen acceptance bar, and a map of exactly where the signal ends.
+      <b>The one-line version:</b> Jev showed the industry a new kind of fast, grounded AI. The open-source wave raced to copy it. Rewire wired it <i>into</i> the model everyone already has — and the verdict is: the wiring works wherever there's real signal; the model's words carry no self-judgment but its state vectors carry nearly all of it (the dial: 0.90 AUROC on fresh sessions, shipped); the harness floor was the real boss fight; and the next move (decide as a native sense, trained into the architecture) now has a written spec, a frozen acceptance bar, and a measured proof that the bar can be met.
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <div><b style="color:var(--text)">Rewire</b> · a decision/read-and-route layer over one frozen LLM · Sep 17–23, 2026</div>
+    <div><b style="color:var(--text)">Rewire</b> · a decision/read-and-route layer over one frozen LLM · Sep 2026 · the 7-day PoC + the verifier dial</div>
     <div class="flinks">
       <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noopener">System One Models &amp; Jev (TypeSafe)</a>
+      <a href="https://github.com/Contrastive-LM/CLM" target="_blank" rel="noopener">Contrastive-LM (CLM)</a>
       <a href="https://github.com/taeold/djev-run" target="_blank" rel="noopener">djev-run</a>
       <a href="https://github.com/llama.cpp" target="_blank" rel="noopener">llama.cpp</a>
     </div>
-    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (1,300-line experiment ledger)</div>
-    <div style="margin-top:10px">Model: one frozen open-weights 4B throughout (12B spot-check) · all numbers pre-registered · negatives reported as fully as positives.</div>
+    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (1,600-line experiment ledger, entries A–M)</div>
+    <div style="margin-top:10px">Model: one frozen open-weights 4B throughout (12B spot-check) · verifier dial: frozen heads over stock embeddings (Qwen3-8B, Gemma-4-12B) · nothing was ever fine-tuned · all numbers pre-registered · negatives reported as fully as positives.</div>
   </div>
 </footer>
 
@@ -814,7 +879,7 @@ const LAYERS = {
   rewire: {
     h: '⚡ The Rewire layer — the only new part',
     p: 'Three jobs, in order: <b>DECIDE</b> (score the options with one glance at the model\'s probability list — no words written), <b>GATE</b> (confidence low? don\'t guess — think or ask a human), <b>THINK</b> (only when earned, full LLM generation with reasoning).',
-    t: '<b>Implementation:</b> a small OpenAI-compatible proxy. DECIDE = forced-choice logprob reads over candidates (top-k logprobs, E ∈ [0,4] rubric), batched with a bit-parity integrity check. GATE = temperature-scaled fitted thresholds + ask-human ranking (10% ask rate, precision 1.0 live). THINK = native thinking, escalated ~18% of the time offline.'
+    t: '<b>Implementation:</b> a small OpenAI-compatible proxy. DECIDE = forced-choice logprob reads over candidates (top-k logprobs, E ∈ [0,4] rubric), batched with a bit-parity integrity check. GATE = temperature-scaled fitted thresholds + ask-human ranking (10% ask rate, precision 1.0 live), plus the completion-claim verifier dial from entry L — a frozen 3,840-weight head over the embeddings endpoint of the engine itself (0.90 AUROC on 168 fresh sessions). THINK = native thinking, escalated ~18% of the time offline.'
   },
   engine: {
     h: '⚙️ The inference engine — untouched',

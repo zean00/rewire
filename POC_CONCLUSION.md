@@ -1,12 +1,14 @@
 # REFLEX/DECIDE PoC — Structured Conclusion
 
-**Window:** 2026-09-17 → 2026-09-23 (seven working days) · **Ledger:** `IMPLEMENTATION_PLAN.md` (1,300 lines, every entry pre-registered or adjudicated) · **Report:** `poc_report.html`
+**Window:** 2026-09-17 → 2026-09-25 (the seven-day PoC, then the verifier-dial arc) · **Ledger:** `IMPLEMENTATION_PLAN.md` (1,600+ lines, every entry pre-registered or adjudicated) · **Report:** `poc_report.html` (covers the PoC eras; entries H–M live in the ledger)
 
 ---
 
 ## 0. TL;DR
 
 We asked whether a calibrated **read-and-route layer over one frozen open-weights model** — no fine-tuning, inference-time only — beats that same model's vanilla configs at browser/computer use. **Answer: yes on offline benchmarks (decisively, against the model's own default and its best vanilla config), no measured gain end-to-end on a real agent harness over a real benchmark (a tie), and the reason is now precisely known:** the decision layer's reads are reproducible but carry no outcome signal (coin-flip discrimination, worse-than-constant calibration), and the failure modes that actually decide episodes are caught perfectly by a mechanical check the environment hands out for free. The program ends with a recorded strategic verdict: keep the skeleton, wire the mechanical gate, suspend the LLM reads behind an explicit bar, and re-run one decisive A/B.
+
+**Addendum (Sep 23–25, entries H–M, inspired by [Contrastive-LM/CLM](https://github.com/Contrastive-LM/CLM)):** the suspension bar was then met — by a different instrument. A tiny calibrated head over the frozen model's **state vectors** (not its words) cleared the same written bar on fresh sessions (AUROC 0.9889 on a Qwen3-8B encoder; 0.8867 on the chain's own Gemma-12B via the stock embeddings endpoint; **0.9011 / Brier 0.0861 vs constant 0.1512 on 168 brand-new live sessions**) and shipped as the GATE's completion-claim verifier. A follow-up attribution entry exonerated quantization (Q4 ≈ bf16). See Era 8.
 
 ---
 
@@ -39,6 +41,8 @@ Three pre-registered gates (MCQ, web replay, tool calls), fairness rules fixed i
 
 **Era 7 — The closing arc (Sep 23).** The omp context-shaking storm that destroyed 14 transcripts root-caused to the read-only base config's `compaction.thresholdPercent: 30` (maintenance fires at exactly 39,321 tokens), with a launch-time `--config` overlay as the fix. Autopsy of the 20 zero-pass tasks: one root disease — **the model cannot read the reward line** (115 failing sessions show `Last reward: −X` in the snapshot the model just read; 55 end with success claims anyway); a five-line mechanical brake catches all of them at zero false vetoes on the passes. JevBench public-suite calibration: documented dead end (not public, wrong backend class), substituted with the same measurement on our own stack: **every read worse than a constant predictor** (Brier 0.131–0.373 vs constant 0.081; AUROC 0.51–0.57; confident tail inverted). Strategic verdict recorded (below).
 
+**Era 8 — The verifier dial (Sep 23–25, entries H–M; inspired by [Contrastive-LM/CLM](https://github.com/Contrastive-LM/CLM)).** The strategic entry suspended all LLM reads behind the explicit bar — then a public project showed a verifier class built on frozen encoder **state vectors** instead of words. Each rung pre-registered against the same frozen bar: **entry H** — CLM's own off-the-shelf contrastive heads fail (ranking is real at 0.99 out-of-session, calibration is indefensible: ECE 0.24, Brier over constant; the conjunction gate fired as designed); **entry J** — the same frozen Qwen3-8B encoder plus our 2-parameter Platt recalibration head clears Stage 1 (0.9937/0.0169) and then Stage 2 on 168 fresh sessions: **AUROC 0.9889 / Brier 0.0374 vs constant 0.0982 — the verifier role is earned**, the first read in the program's history to clear the bar out of sample; **entry K** — the recipe transplanted to the chain's own Gemma-4-12B through the stock `/v1/embeddings` endpoint passes with zero second-model residency (0.8867/0.0653), and leaves a standing instrument rule (one text per embeddings request — batched multi-input vectors on this server build are ill-defined, up to cos 0.87 apart); **entry L** — the integration registration: the head exports as pure data (3,840 weights + Platt + τ* = 0.3261) and clears its live confirmation on 168 brand-new sessions: **AUROC 0.9011 / Brier 0.0861 vs constant 0.1512 — GATE PASSED, the dial ships** (accept precision 93.3%, 113/114 false completion claims caught, 46% of genuine completions conservatively rejected at the frozen τ); **entry M** — the attribution diagnostic: Qwen3-8B Q4_K_M through the same serving stack reproduces bf16 (0.9868/0.0344 vs 0.9889/0.0374), so quantization is exonerated and the encoder gap is Gemma's own representation. The reversal, in one sentence: **in words the model's self-judgment carries no signal; in state vectors it carries nearly all of it.**
+
 ## 4. What stands as confirmed wins
 
 1. **Reads beat generation for selection** — twice, independent designs, p≈10⁻⁷–10⁻¹¹ (offline replay).
@@ -46,14 +50,15 @@ Three pre-registered gates (MCQ, web replay, tool calls), fairness rules fixed i
 3. **Context parity** is the single most transferable engineering lesson of the PoC.
 4. **Confidence ranking transfers even when thresholds don't** — errors are the lowest-confidence events (live: both errors caught at a 10% ask rate, precision 1.0).
 5. **The chain proxy was the difference-maker on the live harness** (0/5 → 5/5 at 4B; 0/5 native 12B → 4/5 chained).
-6. **The measurement discipline works**: it caught the server corrupting its own reads, killed a degenerate sidecar at audit, killed the sampling-noise design before it wasted a pass, and turned "the chain is worse" into "it's a tie, here's why."
-7. **Reproducibility at the bit level is achievable** — verified server config + order controls + P1 316/316 bit-exact.
+6. **The measurement discipline works**: it caught the server corrupting its own reads, killed a degenerate sidecar at audit, killed the sampling-noise design before it wasted a pass, killed an uncritical CLM transplant at its calibration leg, and turned "the chain is worse" into "it's a tie, here's why."
+7. **Reproducibility at the bit level is achievable** — verified server config + order controls + P1 316/316 bit-exact, extended by entries H–M's bit-exact determinism rechecks on every embeddings pass.
+8. **The verifier dial (Era 8)** — a trained readout finally cleared the frozen bar on fresh sessions, ships as pure data over the engine's own embeddings endpoint, and its threshold story (46% conservative rejections) is recorded as a policy dial, not a defect.
 
 ## 5. What stands as measured negatives
 
 1. **No end-to-end benchmark gain**: MiniWoB tie (11/48 vs 10/48), with the asymmetry that the chain's errors are confident and terminal.
-2. **No verifier**: six entries of candidate LLM verifiers (binary, rubric, multi-read) — none both detects and stays safe; the one real property (low-FA at strict-LOW challenge) never transfers to approval.
-3. **No signal in the reads at all, as it turns out**: framing moves them 10× more than outcome; discrimination ≈ coin flip; calibration worse than a constant; the confident tail inverted.
+2. **No verifier in the model's words**: six entries of candidate LLM verifiers (binary, rubric, multi-read) — none both detects and stays safe; the one real property (low-FA at strict-LOW challenge) never transfers to approval. *(Superseded Sep 25, Era 8: a trained state-vector dial — a different instrument, same frozen bar — cleared it and ships.)*
+3. **No signal in the words-channel reads at all, as it turns out**: framing moves them 10× more than outcome; discrimination ≈ coin flip; calibration worse than a constant; the confident tail inverted. *(The state-vector channel proved highly readable — Era 8.)*
 4. **The thresholds never transfer across domains** — every gate must be refit per domain (measured again and again, by design).
 5. **Mode selection cannot live in the reads** — the harness must declare the contract (oracle-router result).
 6. **The external calibration benchmark is unreachable** (JevBench suite not public; API needs a diffusion vLLM branch) — documented, not deferred.
@@ -65,6 +70,7 @@ Three pre-registered gates (MCQ, web replay, tool calls), fairness rules fixed i
 - The chain proxy codebase (v3.16.2: gates, frames, universal tier, config-gated review, onboarding probe `eval/onboard_backend.py`).
 - The verified-numbers server recipe (`-np 1 --no-cache-prompt` + tunnel discipline) and the read-stability checks.
 - The MiniWoB corpus: 168 v3 sessions with page-reward ground truth, 316 balanced probes, five frozen score files (binary, reversed, rubric, entry-E rubric, paraphrase) — sha256-recorded.
+- The verifier-dial artifacts (`eval/reports/entry_h…entry_m/`): frozen states/folds, embeddings manifests with bit-exact rechecks, the exported readout (`entry_k_readout.json`: 3,840 weights + Platt + τ*), and the entry-L fresh-sweep confirmation pool — all sha256-recorded.
 - The calibration harness (`calibration_v3.py`) — now the **standing acceptance test** for any future read.
 - The failure forensics (`autopsy_features.json`, `autopsy_signatures.json`) and the shake root-cause + overlay fix.
 
@@ -77,10 +83,12 @@ Three pre-registered gates (MCQ, web replay, tool calls), fairness rules fixed i
 3. **The bar for any future read (explicit, reversible):** AUROC ≥ 0.75 AND Brier better than the cell's constant on held-out session truth, pre-registered, order-controlled. Nothing measured comes close (0.51–0.57).
 4. **Keep unconditionally:** decision log, gate skeleton + ask-user ranking, verified server config, pre-registration methodology, the calibration harness.
 
+**Addendum (Sep 25).** Point 3's bar was met — by an instrument class the plan didn't name: a calibrated linear dial over frozen-encoder state vectors (entries H–J earned it, K made it native to the chain's own engine, L confirmed it live on 168 fresh sessions and shipped it, M attributed the remaining encoder gap to representation, not quantization). Points 1, 2, and 4 stand unchanged; the dial's enforce-mode routing is the next pre-registration.
+
 ## 8. Honest limits
 
 Offline-replay evidence was always the accuracy backbone; live-browser results are feasibility-scale (n=20, 2 errors), not benchmarks. Everything is one-model-vs-itself — better than its default, never frontier-class. Value accuracy was measured on copy-from-task strings only. The machinery ports to any open-weights decoder LM; **none of the numbers port** (every constant was fit, not assumed). And the endgame analyses (autopsy, calibration, strategy) are post-hoc descriptives — recorded as such, never converted into deployment decisions after the fact.
 
 ---
 
-*One line, if only one line may be kept: the PoC proved the routing mechanism works where it can read real signal, measured precisely where the signal ends, and ended by pointing the next unit of effort at the harness floor instead of the model ceiling.*
+*One line, if only one line may be kept: the PoC proved the routing mechanism works where it can read real signal, measured precisely where the signal ends, and ended by pointing the next unit of effort at the harness floor instead of the model ceiling — and the dial arc then found the missing signal in the one place nobody had thought to read: the model's own state.*

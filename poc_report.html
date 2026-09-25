@@ -205,6 +205,20 @@
 <div id="progress"></div>
 <div class="scatter-tip" id="tip"></div>
 
+<div style="max-width:1060px;margin:14px auto 0;padding:0 22px">
+  <div style="border:1px solid #a78bfa55;border-left:4px solid #a78bfa;background:#a78bfa0d;border-radius:12px;padding:14px 18px;font-size:.9rem;line-height:1.55;color:#c7d2e4">
+    <b style="color:#e6edf7">Update (Sep 25) — the story continued after this report was written.</b>
+    This document covers the 7-day PoC (Sep 17–23), whose reads carried no outcome signal. Entries H–M of
+    <span class="mono" style="color:#22d3ee">IMPLEMENTATION_PLAN.md</span> — inspired by
+    <a href="https://github.com/Contrastive-LM/CLM" target="_blank" rel="noopener" style="color:#22d3ee">Contrastive-LM's CLM</a> —
+    then built a verifier dial over the model's <i>state vectors</i> (not its words), trained on our probes and served through the
+    engine's stock embeddings endpoint. It cleared the same pre-registered suspension bar the word-level reads failed:
+    <b style="color:#34d399">fresh AUROC 0.9011 / Brier 0.0861 vs constant 0.1512 on 168 brand-new live sessions</b> — and ships as the
+    GATE completion-claim verifier. The failure verdicts below stand for the words/logits channel; the full ladder (H fail → J 0.9889 →
+    K 0.8867 → L 0.9011 → M quantization exonerated) lives in the ledger and the README.
+  </div>
+</div>
+
 <nav>
   <span class="logo">REFLEX·<b>DECIDE</b>·THINK</span>
   <a class="nl" href="#background">Background</a>
