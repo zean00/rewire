@@ -63,6 +63,15 @@ except Exception as _e:  # pragma: no cover
           flush=True)
     learning = None
 
+# (v3.17.0) entry-N enforce-mode dial — stdlib-only sibling module; absent
+# or broken = the dial is absent, serving untouched (defensive import)
+try:
+    import dial_enforce  # noqa: E402
+except Exception as _e:  # pragma: no cover
+    print(f"dial_enforce unavailable (continuing without): {_e!r}",
+          flush=True)
+    dial_enforce = None
+
 LOGDIR = ROOT / "eval/reports/omp_arms"
 DECISIONS = LOGDIR / "decisions.jsonl"
 
@@ -2807,6 +2816,23 @@ def sse_chunks(model: str, content: str | None, tool_calls: list[dict],
     yield "data: [DONE]\n\n"
 
 
+def dial_gate_ship(messages, content):
+    """(v3.17.0) One funnel for every session-ending prose answer: consult
+    the enforce dial (entry-N registration). A veto returns the replacement
+    payload — the registered note (no score, no threshold) plus one
+    re-observe eval cell so the harness keeps the episode alive — and None
+    ships the answer unchanged. No dial configured = None, always."""
+    if dial_enforce is None or not (content or "").strip():
+        return None
+    d = dial_enforce.route(messages, content, log_decision)
+    if d is None:
+        return None
+    tb = tab_name(messages) or "w0c0"
+    code = (f"const tab = await browser.tab('{tb}');"
+            "display(await tab.ariaSnapshot());")
+    return (d["note"], "tool_calls", [eval_cell(code, "dial-reobserve")])
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -2891,6 +2917,9 @@ class Handler(BaseHTTPRequestHandler):
                                           "junk": (c or "")[:120],
                                           "answer": atext[:80],
                                           "ts": time.time()})
+                            _v = dial_gate_ship(req["messages"], atext)
+                            if _v is not None:
+                                return _v
                             return (atext, "stop", [])
                         if fb is not None:
                             log_decision({"arm": "decide",
@@ -2905,6 +2934,12 @@ class Handler(BaseHTTPRequestHandler):
                     if (note and fin != "tool_calls" and (c or "").strip()
                             and not MALFORMED_ANSWER_RE.search(c)):
                         resp = (c.rstrip() + "\n\n" + note, fin, _t)
+                    # (v3.17.0) the enforce dial's main funnel: the answer
+                    # about to ship is the session-ending prose; the dial
+                    # scores it and may veto (note + re-observe cell)
+                    _v = dial_gate_ship(req["messages"], resp[0])
+                    if _v is not None:
+                        return _v
                     return resp
                 return (None, finish, [tool_call])
             if mode == "vanilla-nothink":
@@ -3017,6 +3052,11 @@ def main():
             print(f"completion-review: enabled mode="
                   f"{COMPLETION_REVIEW['mode']} "
                   f"p_done_threshold={COMPLETION_REVIEW['p_done_threshold']}",
+                  flush=True)
+        # (v3.17.0) the entry-N enforce dial rides the backend config's
+        # dial block; absent/disabled = byte-for-byte prior behavior
+        if dial_enforce is not None:
+            print(f"enforce dial: {dial_enforce.init(REMOTE.get('dial'))}",
                   flush=True)
     if REMOTE and REMOTE.get("chain"):
         # (v3.14.0) the decide arm travels with the backend: reads over
@@ -3161,7 +3201,31 @@ def main():
           "it could recover; anchor_index is now barred from yanking the "
           "read's pick when that pick IS the pending step's resolved target "
           "(named or positional) — the same protection the pend-override "
-          "path already had, extended to the non-forced path; v3.16.2: "
+          "path already had, extended to the non-forced path; v3.17.0: "
+          "ENTRY-N ENFORCE DIAL — the frozen completion-claim verifier "
+          "(entry L's shipped readout, entry_k_readout.json, unchanged) "
+          "stops logging and starts routing: every session-ending prose "
+          "answer on the decide arm funnels through dial_gate_ship into "
+          "proxy/dial_enforce.py, which applies the frozen probe rule "
+          "(>=40 chars prose + a claim-vocab sentence hit = in "
+          "jurisdiction; outside answers ship logged as "
+          "outside-jurisdiction), rebuilds the evidence exactly as "
+          "ckpt_rubric.build_evidence (newest non-blank tool result, "
+          "compacted, 8000 cap — byte-parity smoke-verified against v5 "
+          "transcripts), embeds it on the host's combined gen+embeddings "
+          "llama-server (one text per POST, strictly serial — LOCK holds "
+          "across compute), scores p = sigmoid(a(w.x+b)+c), and routes at "
+          "the frozen tau (read from the artifact, never the display "
+          "round): accept ships, sub-tau VETOES once per registered D2 "
+          "(claim discarded, agent gets a note with no score/threshold in "
+          "it + one re-observe eval cell, episode continues), cap = 2 "
+          "continuation vetoes then the third sub-tau claim ships as "
+          "cap-terminate (state as-is, page reward alone decides truth), "
+          "first claims flagged for the audit (post-veto states are "
+          "intervention outcomes), and any instrument failure ships as a "
+          "DISCLOSED instrument-error-accept — a silent sub-tau pass stays "
+          "impossible; config rides the backend config's dial block, "
+          "absent/disabled = byte-for-byte prior serving; v3.16.2: "
           "coverage and posture fixes from the 2026-09-22 live test — "
           "(1) the 3-frame review reads move into review_frames_run and "
           "gain a SECOND, log-only trigger site: the gate-passed answer "
