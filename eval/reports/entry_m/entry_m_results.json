@@ -1,0 +1,189 @@
+{
+ "manifest": {
+  "server": "llama-server -m models/Qwen_Qwen3-8B-Q4_K_M.gguf --alias qwen3-8b-q4 --host 127.0.0.1 --port 8998 --embedding --pooling last -c 8192 -np 1 -ngl 99 --flash-attn on -b 1024 -ub 512 --cache-ram 0 --no-cache-prompt",
+  "server_build": {
+   "repo": "github.com/ggml-org/llama.cpp",
+   "commit": "4de092659663c1f74c80f8e8f6ade33e87d50077",
+   "built_local": true,
+   "cuda": "13.3 (V13.3.73)",
+   "arch": "sm_120",
+   "patches": [
+    "server-context.cpp handle_embeddings_impl: task.params.cache_prompt = false (embedding tasks never inherited --no-cache-prompt; struct default true made results depend on the previous request via slot LCP KV keep)",
+    "built with -DGGML_CUDA_USE_GRAPHS=OFF (first execution of a shape bucket (CUDA graph capture) returns different vectors than replays; with graphs off every request runs the identical eager path)"
+   ],
+   "graphs": "disabled (-DGGML_CUDA_USE_GRAPHS=OFF)"
+  },
+  "card": "NVIDIA GeForce RTX 5060 Laptop GPU (8151 MiB), local machine \u2014 not the GPU host; disclosed in entry M registration",
+  "endpoint": "POST /v1/embeddings, input = raw state text verbatim",
+  "client": "one text per POST, serial \u2014 the entry-K standing instrument rule; six long varied throwaway warmup texts before the pass to saturate the CUDA memory pool (disclosed instrument fix, ledger 2026-09-25)",
+  "supersedes_pass1": true,
+  "supersedes_reason": "pass-1 and pass-2 rechecks FAILED: repeat-request nondeterminism from three stacked sources \u2014 slot LCP KV keep (fixed by disclosed cache_prompt patch), CUDA graph capture-vs-replay (fixed by -DGGML_CUDA_USE_GRAPHS=OFF), and memory-pool growth churn (fixed by long-varied warmup). All disclosed in the ledger before any metric existed",
+  "dim": 4096,
+  "n_v3": 316,
+  "n_v4": 290,
+  "v3_states_sha256": "8a684a05b05691d171660ed9907f591626307589298336e898016d457e48dd01",
+  "v4_states_sha256": "4aa4538765304851dcb1c9595acb937b52cc20b21574774c1177ca469f63d233",
+  "embd_normalize": "server default (euclidean/L2)",
+  "quant": "Qwen_Qwen3-8B Q4_K_M GGUF (bartowski), ~4.8 bpw",
+  "wall_s": 106.29,
+  "determinism_recheck_bitexact": true
+ },
+ "arms": {
+  "m_a": {
+   "recipe": "K-a transplanted: C=10 balanced + Platt on frozen-fold oof",
+   "v3_oof_auroc": 0.99,
+   "fresh_auroc": 0.9868,
+   "fresh_brier": 0.0344,
+   "fresh_ece10": 0.0459,
+   "calibration_deciles": [
+    {
+     "bin": 0,
+     "n": 254,
+     "mean_p": 0.0046,
+     "freq_y": 0.0039
+    },
+    {
+     "bin": 1,
+     "n": 1,
+     "mean_p": 0.1168,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 2,
+     "n": 3,
+     "mean_p": 0.2309,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 3,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 4,
+     "n": 3,
+     "mean_p": 0.4202,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 5,
+     "n": 7,
+     "mean_p": 0.5177,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 6,
+     "n": 1,
+     "mean_p": 0.6636,
+     "freq_y": 0.0
+    },
+    {
+     "bin": 7,
+     "n": 7,
+     "mean_p": 0.7323,
+     "freq_y": 0.8571
+    },
+    {
+     "bin": 8,
+     "n": 5,
+     "mean_p": 0.8682,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 9,
+     "n": 9,
+     "mean_p": 0.9612,
+     "freq_y": 0.6667
+    }
+   ],
+   "gate_auroc_ge_075": true,
+   "gate_brier_lt_constant": true,
+   "gate_pass": true
+  },
+  "m_b": {
+   "recipe": "K-b transplanted: unweighted, C by v3 oof Brier, refit on all 316",
+   "v3_oof_brier_by_C": {
+    "0.01": 0.08068,
+    "0.1": 0.07994,
+    "1.0": 0.07704,
+    "10.0": 0.05747
+   },
+   "picked_C": 10.0,
+   "fresh_auroc": 0.9833,
+   "fresh_brier": 0.0737,
+   "fresh_ece10": 0.1103,
+   "calibration_deciles": [
+    {
+     "bin": 0,
+     "n": 217,
+     "mean_p": 0.0562,
+     "freq_y": 0.0
+    },
+    {
+     "bin": 1,
+     "n": 53,
+     "mean_p": 0.1266,
+     "freq_y": 0.283
+    },
+    {
+     "bin": 2,
+     "n": 14,
+     "mean_p": 0.2308,
+     "freq_y": 0.7857
+    },
+    {
+     "bin": 3,
+     "n": 6,
+     "mean_p": 0.3772,
+     "freq_y": 1.0
+    },
+    {
+     "bin": 4,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 5,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 6,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 7,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 8,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    },
+    {
+     "bin": 9,
+     "n": 0,
+     "mean_p": null,
+     "freq_y": null
+    }
+   ],
+   "gate_auroc_ge_075": true,
+   "gate_brier_lt_constant": true,
+   "gate_pass": true
+  }
+ },
+ "fresh_pool": {
+  "n": 290,
+  "positives": 32,
+  "base_rate": 0.1103,
+  "constant_brier": 0.0982
+ }
+}
