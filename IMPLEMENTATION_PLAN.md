@@ -1939,3 +1939,41 @@ use-autocomplete 5758557398 vanilla-then-guarded
 ```
 
 **Pre-launch host state (verified at registration):** proxy serving with the dial banner on; combined server up at ~10.5 GB; page server :8077 serving; both omp provider entries present in models.yml (dormant). Nothing to change — the arms differ only in the requested model name.
+
+## ENTRY O SANITY — EXECUTED 2026-09-26 (both arms, before sweep session 1)
+
+Registered check: one throwaway session per arm into `sanity_runs_v7/`
+(guarded click-button s7947859754, vanilla click-button s5588567731).
+
+**Guarded arm — per-session dial semantics confirmed live (v3.17.1).**
+Page succeeded (raw=1, fin=0.96485) at 13.6 s. 13 dial-enforce records in
+the session window. The sequence is the first live demonstration of
+per-session keying: claim_event restarts at 0 (the v6 global-key bug is
+fixed in production), first claim p=0.140171 sub-tau first_claim=true ->
+veto (vetoes_done=0) -> veto (1) -> cap-terminate (2) — the registered
+bounded-retry policy, with evidence_sha12 467a1970c45f constant and p
+deterministic across all three claims. This was a dial false reject on a
+true success — exactly the operating-point tradeoff entry N priced; the
+A/B prices its consequence. After the cap-terminate ship the model kept
+calling tools (post-ship continuation) until the 480 s cap (exit 124);
+the page state stayed done/raw=1 through post-done interactions —
+MiniWoB episode freeze holds, so retries cannot un-complete a task.
+
+**Vanilla arm — remote passthrough clean.** Serving records are
+arm:"remote" (model gemma-4-12b-it) with zero dial-enforce records in its
+window — the dial hooks are unreachable from the vanilla path by
+construction, now confirmed live. The model struggled (tab.click
+timeouts) and gave up at 115 s (exit 0); its tab closed before the
+page's 120 s terminal state, so the row recorded no page state
+(cdp_err). Precedent: v5 10/168 and v6 7/168 rows took the same path.
+The frozen verdict bar already counts no-terminal-state as not success
+(conservative, symmetric, no exclusions); the adjudication will report
+the per-arm rate of this path.
+
+Sanity verdict: PASS — both arms serve as designed, the collector
+attaches on both, and the decisive difference (dial records present only
+in the guarded path) is observable. Launching the frozen sweep: 336
+sessions (168 paired instances x 2 arms, strict 84/84 arm-order
+alternation), first session guarded/click-button/s1916988017, log
+/tmp/mw_bench/sweep_v7.log. Bar untouched; no config changes since
+registration.
