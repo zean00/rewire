@@ -2033,3 +2033,36 @@ metric, seeds and bar unchanged, sweep restarts from session 1 under
 v3.17.2 with the pre-registered banner gate. Per-session independence
 will be verified on the first TWO dial-using sessions before the sweep
 is left to run.
+
+## ENTRY O RELAUNCH — LIVE 2026-09-26 18:31 WIB, v3.17.2 verified in serving
+
+Host proxy restarted on v3.17.2 at 18:30:17 WIB (banner gate passed:
+`enforce dial: enabled tau=0.326134 cap=2 dim=3840`), sweep relaunched
+from session 1 at 18:31 (PID recorded in the log header; watcher armed).
+
+**Per-session keying verification, three layers.**
+1. Unit: `session_seed()` replays every real v7/sanity transcript
+   (all 8 session dirs, both arms, mid-session prefixes) to its own
+   unique seed — ALL OK; tab names are "main" in every one of them.
+2. Regression test: two sessions naming their tab "main" must get
+   different keys (`test_session_seed_distinguishes_sessions_that_
+   name_their_tab_main`); passes on the host.
+3. Serving: the first dial-using session of the relaunched sweep
+   (guarded/click-button/s9698753838) opened with a FRESH per-session
+   counter — claim_event 1, first_claim=true, p=0.476132 >= tau ->
+   accept, then deterministic re-scores (same evidence_sha, same p) at
+   claim_events 2-4 and two outside-jurisdiction ships. No inherited
+   state from any earlier session. The second dial-using session's
+   fresh start rides the sweep; the adjudication verifies claim_event
+   continuity across all 168 guarded sessions regardless.
+
+**Serving-behavior note (not a bug).** The dial's funnel fires on the
+model's fallback-path response (chain stood down); in the first two
+relaunched guarded sessions the chain extracted the model's tool call on
+every turn, so the funnel never fired and those sessions have zero dial
+records — coverage is exactly as registered (session-ending prose
+answers), the model simply never handed one over before the 480 s cap.
+Both guarded cap-hits so far are model looping, NOT dial vetoes (zero
+veto records). Early pattern to watch (n=5, no conclusions): guarded
+sessions 3/3 hitting the 480 s cap vs v6's 55/168; per-arm wall-time
+descriptor will price it.
