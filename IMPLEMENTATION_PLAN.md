@@ -2066,3 +2066,64 @@ Both guarded cap-hits so far are model looping, NOT dial vetoes (zero
 veto records). Early pattern to watch (n=5, no conclusions): guarded
 sessions 3/3 hitting the 480 s cap vs v6's 55/168; per-arm wall-time
 descriptor will price it.
+
+## ENTRY JO — EXECUTED, FAILED, RECORDED 2026-09-26 (pre-registered honest negative)
+
+**Question.** Does the community Q4_K_M quant of Jev-Omni
+(Reza2kn/Jev-Omni-Q4_K_M-GGUF; source akhilaaa3/Jev-Omni rev c050d51,
+gemma-4-12B-it backbone, FP32 decision head bit-verified by the quantizer)
+produce a calibrated P(task complete) on our probes? Protocol pre-registered
+and committed (90a98b6) BEFORE any scoring: one pass over the frozen entry-L
+pool, frozen input mapping (state = evidence block verbatim, question =
+"Has the agent completed the task?", options Yes/No via the quantizer's own
+unmodified adapter), frozen metrics, pre-committed gate (AUROC >= 0.75 AND
+Brier < constant AND ECE-10 <= 0.10), no exclusions, no tuning.
+
+**Result (entry-L pool, n=140, 26 positive — the same pool where the dial's
+frozen numbers are AUROC 0.9011 / Brier 0.0861 / ECE-10 0.0852):**
+
+| | AUROC | Brier | ECE-10 |
+| --- | ---: | ---: | ---: |
+| dial (entry-K readout, frozen) | 0.9011 | 0.0861 | 0.0852 |
+| Jev-Omni Q4_K_M | **0.4028** | **0.3715** | **0.3624** |
+
+Gate: FAIL on all three criteria. AUROC is below chance. Paired at the
+dial's tau* = 0.326134: Jev accepts 83/140 with precision 0.1928 — the base
+rate is 0.1857, so its accept set carries no information — and of its 20
+very-confident (p >= 0.9) accepts exactly 1 is a true completion. Mean
+|p_jev − p_dial| = 0.474; the dial wins per-row absolute error 125 vs 15.
+
+**Chain of custody held.** All artifact SHAs matched the pins (gguf
+35bf51cb…, head 47b346e1…, adapter 11d07fdf…); the metric-code control
+reproduced the dial's frozen entry-L numbers to 4 dp from
+entry_l_emb.npz + entry_k_readout.json before any Jev score was computed;
+both pre-registered smoke tests passed (case 1 reproduced the quantizer's
+own recorded GGUF probability to 4 dp: 0.0011). Instrument not suspect.
+
+**Reading (descriptive).** The head is confidently wrong in a structured
+way: look-finished-but-failed states score p >= 0.9 while truly-complete
+states often sit below tau. Two causes, not separated by this pass:
+(a) domain — Jev-Omni was trained on natural-language decision contexts;
+our evidence is accessibility-tree dumps, and calibration does not transfer
+across distributions (the quantizer's ECE 0.04 was measured on THEIR
+benchmark); (b) residual Q4 backbone drift on out-of-distribution text.
+The below-chance AUROC says the spurious signal is anti-correlated with
+page truth — "looks finished" is exactly the near-miss signature MiniWob
+punishes, which is what the dial had to LEARN from page-reward labels.
+
+**Implication.** Strongest evidence yet for the project's core bet: the
+dial's value is the in-distribution label factory (page-reward-labeled
+claim moments), not the architecture of a small head. A pre-trained
+decision head with a 0.04 ECE on its own benchmark does not transfer;
+calibration must be paid for in labeled data on the serving distribution.
+No serving changes anywhere. Jev-Omni sidecar parked. Salvage path, if
+ever wanted, is its own future registered entry: a mapping/prompt search
+tuned on a fresh labeled split (entry-O sweep transcripts), validated on
+a held-out split — entry-L is never used for tuning, so it stays a clean
+held-out test.
+
+**Run note.** Laptop CPU only (llama-server b8821, 127.0.0.1:9021
+loopback, -ngl 0, nice, mmap): ~3.5–4.5 s/decision, zero sweep
+interference, host and GPU untouched; server killed after the pass.
+Artifacts: eval/reports/entry_jo/ (PROTOCOL.md, entry_jo_score.py,
+entry_jo_scores.jsonl, entry_jo_results.json).

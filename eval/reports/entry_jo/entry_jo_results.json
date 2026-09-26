@@ -1,0 +1,48 @@
+{
+ "pool_sha256": "a4d464baa8644a79bcd5d5f38c56906a9a3a1bc42a0060a6ed3cb662d6addd89",
+ "pins": {
+  "gguf": "35bf51cb0dee2504e9f16093278ca853da2888251577236371630124605c40cd",
+  "head": "47b346e120dc9110ef7c0b610cf5d1f459ddcdb05ffd3cd126b6938d88a8bb77",
+  "adapter": "11d07fdf14f22890ee92b872481052b7c66c0ac65adabf83a70bbdd5150d9b83"
+ },
+ "server": "http://127.0.0.1:9021",
+ "jev_q4km": {
+  "auroc": 0.4028,
+  "brier": 0.3715,
+  "constant_brier": 0.1512,
+  "ece10": 0.3624,
+  "base_rate": 0.1857,
+  "clipped_rows": 0
+ },
+ "gate": {
+  "auroc_ge_075": false,
+  "brier_lt_constant": false,
+  "ece10_le_010": false,
+  "pass": false
+ },
+ "dial_frozen_entry_l": {
+  "auroc": 0.9011,
+  "brier": 0.0861,
+  "ece10": 0.0852
+ },
+ "dial_recompute_control": {
+  "auroc": 0.9011,
+  "brier": 0.0861,
+  "constant_brier": 0.1512,
+  "ece10": 0.0852,
+  "base_rate": 0.1857
+ },
+ "paired_descriptive": {
+  "tau_dial": 0.3261337492932296,
+  "mean_abs_p_diff": 0.4738,
+  "max_abs_p_diff": 0.9716,
+  "both_accept": 6,
+  "both_reject": 48,
+  "jev_only_accept": 77,
+  "dial_only_accept": 9,
+  "jev_abs_error_win": 15,
+  "dial_abs_error_win": 125
+ },
+ "n": 140,
+ "positives": 26
+}
