@@ -107,9 +107,14 @@ def init(block) -> str:
             f"readout={ro} embeddings={cfg['url']}")
 
 
-def _session_key(messages) -> str:
-    """Same stand-in for a session id the review uses: the first message's
-    repr head. Bounded; the oldest session falls out of the cap state."""
+def _session_key(messages, session_key=None) -> str:
+    """Per-session identity. The caller's tab name ('w<seed>c0') is the
+    truthful key — seed-unique per session and stable across harness
+    compactions. The first message's repr head is only the fallback: the
+    v6 sweep disclosed that the harness's first wire message is constant
+    across sessions, which globally shared the cap state."""
+    if session_key:
+        return f"tab:{session_key}"
     return repr(messages[0])[:300] if messages else "?"
 
 
@@ -180,16 +185,18 @@ def score(text: str) -> tuple:
     return p, nrm
 
 
-def route(messages, content, log_decision) -> dict | None:
+def route(messages, content, log_decision, session_key=None) -> dict | None:
     """The one funnel for a session-ending prose answer. Returns
     {"note": ...} to VETO (the caller ships the note + a re-observe cell),
-    None to ship unchanged. Never raises: any internal failure is logged
+    None to ship unchanged. session_key: the caller's per-session identity
+    (the agent's tab name); without it, falls back to the first message.
+    Never raises: any internal failure is logged
     as instrument-error-accept and the answer ships (disclosed fail-open)."""
     if CFG is None:
         return None
     prose = prose_of(content)
     try:
-        key = _session_key(messages)
+        key = _session_key(messages, session_key)
         st = _STATE.get(key)
         if st is None:
             st = {"events": 0, "vetoes": 0}

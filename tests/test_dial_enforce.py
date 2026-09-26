@@ -64,6 +64,20 @@ def msgs_with_tool_result(text):
             {"role": "assistant", "content": CLAIM}]
 
 
+def msgs_same_first_message(text, tab="w111c0"):
+    """The live harness shape the v6 sweep disclosed: a constant first wire
+    message across sessions, the per-session tab name only inside an eval
+    cell, then the tool result and the claim."""
+    return [{"role": "user", "content": "You are omp. Same for everyone."},
+            {"role": "assistant", "content": "", "tool_calls": [
+                {"id": "c1", "type": "function",
+                 "function": {"name": "eval",
+                              "arguments": {"code":
+                                            f"browser.open({{name:'{tab}'}})"}}}]},
+            {"role": "tool", "content": [{"type": "text", "text": text}]},
+            {"role": "assistant", "content": CLAIM}]
+
+
 # --- jurisdiction (the frozen probe rule) -----------------------------------
 
 def test_short_prose_is_outside(dial):
@@ -165,6 +179,37 @@ def test_disabled_init_never_routes(tmp_path):
     assert D.init({"enabled": False}) != ""
     assert D.CFG is None
     assert D.route(msgs_with_tool_result("s"), CLAIM, log) is None
+
+
+def test_session_key_tabs_are_independent_even_with_same_first_message(dial):
+    # Regression (v6 sweep, disclosed before any metric): sessions keyed on
+    # the first wire message shared ONE global cap state, so after the first
+    # session's two vetoes every later session's sub-tau claims shipped as
+    # cap-terminate. The tab name must separate them.
+    LOG.clear()
+    dial.embed = lambda text: [-4.0, 0.0]  # p ~ 0.018: every claim is sub-tau
+    a = msgs_same_first_message("state A", tab="w111c0")
+    b = msgs_same_first_message("state B", tab="w222c0")
+    va = D.route(a, CLAIM, log, session_key="w111c0")
+    assert va is not None and va["note"]  # session A veto 1
+    vb = D.route(b, CLAIM, log, session_key="w222c0")
+    assert vb is not None and vb["note"]  # session B has its OWN cap: veto 1
+    recs = [r for r in LOG if r.get("routed") == "veto"]
+    assert len(recs) == 2
+
+
+def test_session_key_fallback_is_first_message(dial):
+    # Without a tab name the old fallback applies — documented, and now
+    # understood to be a cross-session SHARE when the harness's first
+    # message is constant. Two tab-less calls share one state.
+    LOG.clear()
+    dial.embed = lambda text: [-4.0, 0.0]  # p ~ 0.018: every claim is sub-tau
+    m = msgs_same_first_message("state", tab="w111c0")
+    assert D.route(m, CLAIM, log) is not None          # veto 1
+    assert D.route(m, CLAIM, log) is not None          # veto 2 (same state)
+    assert D.route(m, CLAIM, log) is None              # cap-terminate ships
+    recs = [r for r in LOG if r.get("routed") == "cap-terminate"]
+    assert len(recs) == 1
 
 
 def test_score_math_matches_readout_shape(dial):

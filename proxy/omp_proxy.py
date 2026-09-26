@@ -2829,7 +2829,11 @@ def dial_gate_ship(messages, content):
     ships the answer unchanged. No dial configured = None, always."""
     if dial_enforce is None or not (content or "").strip():
         return None
-    d = dial_enforce.route(messages, content, log_decision)
+    # (v3.17.1) the dial's per-session state keys on the tab name — the
+    # seed-unique identity that survives harness compactions. The first
+    # wire message is constant across sessions (disclosed in the v6 ledger).
+    d = dial_enforce.route(messages, content, log_decision,
+                           session_key=tab_name(messages))
     if d is None:
         return None
     tb = tab_name(messages) or "w0c0"
@@ -3230,7 +3234,15 @@ def main():
           "intervention outcomes), and any instrument failure ships as a "
           "DISCLOSED instrument-error-accept — a silent sub-tau pass stays "
           "impossible; config rides the backend config's dial block, "
-          "absent/disabled = byte-for-byte prior serving; v3.16.2: "
+          "absent/disabled = byte-for-byte prior serving; v3.17.1: the "
+          "dial's per-session state keys on the agent's tab name (passed "
+          "from dial_gate_ship) instead of the first wire message's repr "
+          "head — the v6 sweep disclosed the harness's first message is "
+          "constant across sessions, so one global cap state served every "
+          "session and only sweep session 1 ever saw a veto (claim_event "
+          "ran 1..454 with a single first_claim; disclosed in the ledger "
+          "before any adjudication metric); the tab name is seed-unique "
+          "and survives compactions; v3.16.2: "
           "coverage and posture fixes from the 2026-09-22 live test — "
           "(1) the 3-frame review reads move into review_frames_run and "
           "gain a SECOND, log-only trigger site: the gate-passed answer "
