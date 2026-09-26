@@ -1977,3 +1977,59 @@ sessions (168 paired instances x 2 arms, strict 84/84 arm-order
 alternation), first session guarded/click-button/s1916988017, log
 /tmp/mw_bench/sweep_v7.log. Bar untouched; no config changes since
 registration.
+
+## ENTRY O CORRECTION + DISCLOSED LAUNCH BUG #3 — 2026-09-26, sweep session 1
+
+**Correction to the sanity entry above.** Its conclusion "per-session dial
+semantics confirmed live (v3.17.1)" was wrong. What the sanity actually
+showed was a fresh GLOBAL state on a freshly restarted proxy process: the
+first dial-using session after a restart always starts at claim_event 0
+under either keying. The falsifying observation came minutes later from
+the registered session-1 monitoring: the sweep's first guarded session
+logged dial records with claim_event 3 — continuing the SANITY session's
+counter — with no claims of its own before it. Two sessions with
+different seeds shared one dial state.
+
+**Root cause.** v3.17.1 keys the dial on the model's tab name, on the
+premise that the harness-injected tab name (`w<seed>c0` in the prompt) is
+seed-unique. The premise is false in serving: the MODEL chooses the tab
+name, and it renames — every observed session opens its tab as
+`name:"main"` (the sanity session, sweep session 1, and 2403/2403
+browser.open calls across a 12-session v6 sample). `tab_name()` therefore
+returns "main" for every session, and `tab:main` is a de-facto global
+key — the v6 global-key bug re-created under a different name.
+
+**Impact.** Identical failure mode to the v6 bug: only the first
+dial-using session ever sees vetoes; every later sub-tau claim ships
+cap-terminate immediately; the per-session bounded retry the A/B is
+registered to test never engages; Q2 veto cost would be unmeasurable
+again. Caught by the pre-registered per-session dial check at sweep
+session 1 — before any adjudication metric touched any pool. The sweep
+was stopped at 3 completed rows + 1 in flight (rows: guarded s1916988017
+raw=1, vanilla s1916988017 raw=1, vanilla s9996980943 no-state; the
+in-flight guarded s9996988017-session was killed). The guarded rows are
+polluted by the shared key; the vanilla rows are dial-free by
+construction but are discarded with them. All partial v7 data wiped
+(main_v7.jsonl, .cdp, main_runs_v7/); the sanity artifacts remain as the
+disclosed record.
+
+**Fix (v3.17.2).** The dial's session key is now the task URL's
+harness-injected seed: `session_seed(messages)` scans the wire messages
+for `wseed=(\d+)` (newest occurrence wins). The seed is part of the
+prompt the harness injects per session — seed-unique by construction,
+present in every session's first user message, and rides the prompt so
+compaction cannot silently merge sessions. The model-chosen tab name is
+demoted to fallback for non-benchmark traffic. Regression test added
+(`test_session_seed_distinguishes_sessions_that_name_their_tab_main`):
+two sessions whose tabs are BOTH "main" must produce different keys —
+torch-guarded, exercises on the host. dial_enforce.py itself is
+unchanged (its `_session_key` already honors the caller's key; the bug
+was the caller's key choice).
+
+**Relaunch decision.** The frozen registration (arms, 168 paired seeds,
+verdict bar, prompt) is untouched — this is a serving-code fix of the
+same class as the entry-O load_remote catch: disclosed before any
+metric, seeds and bar unchanged, sweep restarts from session 1 under
+v3.17.2 with the pre-registered banner gate. Per-session independence
+will be verified on the first TWO dial-using sessions before the sweep
+is left to run.

@@ -244,3 +244,45 @@ def test_load_remote_passes_dial_block(tmp_path):
     assert r["dial"] == cfg["dial"]
     assert r["completion_review"] is None  # disabled block stays absent
     assert r["chain"] is True
+
+
+def _omp_proxy():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("omp_proxy imports torch at module level")
+    spec = importlib.util.spec_from_file_location(
+        "omp_proxy_session_seed",
+        Path(__file__).resolve().parents[1] / "proxy" / "omp_proxy.py")
+    M = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    return M
+
+
+def test_session_seed_distinguishes_sessions_that_name_their_tab_main():
+    # Regression (v3.17.2, the entry-O session-1 discovery): v3.17.1 keyed
+    # the dial on the model's tab name, but models rename their tab — every
+    # observed session opens it as name:"main" (2403/2403 browser.open calls
+    # in a v6 sample), so the "per-session" key collapsed into one global
+    # state and the sweep's first session continued the sanity session's
+    # veto counter. The key must come from the task URL's harness-injected
+    # wseed, which differs per session even when the tab name is identical.
+    M = _omp_proxy()
+    open_cell = ('const tab = await browser.open('
+                 '{name: "main", url: "http://x/{task}.html?wseed={seed}'
+                 '&autostart=1&rep=c"});')
+    a = [{"role": "user", "content": "Browser task... wseed=111 ..."},
+         {"role": "assistant", "content": "", "tool_calls": [
+             {"id": "c1", "type": "function", "function": {
+                 "name": "eval",
+                 "arguments": {"code": open_cell.format(
+                     task="click-button", seed=111)}}}]}]
+    b = [{"role": "user", "content": "Browser task... wseed=222 ..."},
+         {"role": "assistant", "content": "", "tool_calls": [
+             {"id": "c1", "type": "function", "function": {
+                 "name": "eval",
+                 "arguments": {"code": open_cell.format(
+                     task="enter-text", seed=222)}}}]}]
+    assert M.tab_name(a) == M.tab_name(b) == "main"  # the v3.17.1 key collides
+    assert M.session_seed(a) == "111"
+    assert M.session_seed(b) == "222"
+    assert M.session_seed(a) != M.session_seed(b)
+    assert M.session_seed([{"role": "user", "content": "no seed here"}]) is None

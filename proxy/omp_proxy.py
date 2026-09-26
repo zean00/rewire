@@ -519,6 +519,20 @@ def tab_name(messages: list[dict]) -> str | None:
     return None
 
 
+def session_seed(messages: list[dict]) -> str | None:
+    """(v3.17.2) The benchmark seed from the task URL — the harness-injected
+    identity that is actually seed-unique. The v3.17.1 tab-name premise was
+    wrong in serving: the model renames its tab, and every observed session
+    opens it as name:"main" (2403/2403 browser.open calls in a v6 sample),
+    so a tab-name key collapses all sessions into one global state — the
+    entry-O session-1 discovery. wseed= rides the task prompt's URL and the
+    open cell; the newest occurrence wins."""
+    seeds: list[str] = []
+    for m in messages:
+        seeds += re.findall(r"wseed=(\d+)", json.dumps(m))
+    return seeds[-1] if seeds else None
+
+
 def browser_in_play(messages: list[dict]) -> bool:
     return any("browser.open(" in c or "browser.tab(" in c for c in eval_codes(messages))
 
@@ -2829,11 +2843,16 @@ def dial_gate_ship(messages, content):
     ships the answer unchanged. No dial configured = None, always."""
     if dial_enforce is None or not (content or "").strip():
         return None
-    # (v3.17.1) the dial's per-session state keys on the tab name — the
-    # seed-unique identity that survives harness compactions. The first
-    # wire message is constant across sessions (disclosed in the v6 ledger).
+    # (v3.17.2) the dial's per-session state keys on the task URL's seed —
+    # the harness-injected, seed-unique identity. v3.17.1 keyed on the tab
+    # name, but models rename their tab: every observed session opens it as
+    # name:"main", which re-created the v6 global-state bug under a
+    # different name (disclosed in the entry-O ledger at sweep session 1).
+    # The seed rides the prompt (survives compaction); tab name stays the
+    # fallback for non-benchmark traffic.
     d = dial_enforce.route(messages, content, log_decision,
-                           session_key=tab_name(messages))
+                           session_key=session_seed(messages)
+                           or tab_name(messages))
     if d is None:
         return None
     tb = tab_name(messages) or "w0c0"
@@ -3241,8 +3260,14 @@ def main():
           "constant across sessions, so one global cap state served every "
           "session and only sweep session 1 ever saw a veto (claim_event "
           "ran 1..454 with a single first_claim; disclosed in the ledger "
-          "before any adjudication metric); the tab name is seed-unique "
-          "and survives compactions; v3.16.2: "
+          "before any adjudication metric); v3.17.2: the tab-name premise "
+          "failed in serving — models rename their tab and every observed "
+          "session opens it as name:\"main\" (2403/2403 in a v6 sample), "
+          "collapsing the key to one global state again (entry-O session-1 "
+          "discovery, sweep stopped at 3 rows, zero metrics computed); the "
+          "dial now keys on the task URL's wseed (harness-injected, "
+          "seed-unique, survives compaction), tab name demoted to "
+          "fallback; v3.16.2: "
           "coverage and posture fixes from the 2026-09-22 live test — "
           "(1) the 3-frame review reads move into review_frames_run and "
           "gain a SECOND, log-only trigger site: the gate-passed answer "
