@@ -1746,3 +1746,196 @@ use-autocomplete [6416102956, 3121216199, 2393282810, 9194169206, 9874577382, 81
 **Q4 — dial audit, fresh pool, frozen τ\* = 0.3261337492932296 (descriptive).** Pool: 149 first claims (57 session-ending answers, 92 mid-session prose-with-tool-call); 142 labeled by page reward (raw > 0 → 1; 7 sessions had no terminal page state and are excluded), 25 positives. **AUROC 0.8487, Brier 0.0963 vs the pool's own constant-predictor 0.1451** — the frozen bar's shape (AUROC ≥ 0.75, Brier < constant) holds descriptively on fresh first claims. At τ\*: confusion tp12 fp1 tn116 fn13 — **accept precision 0.923 (12/13), false-alarm rate on false claims 0.0085 (1/117), reject rate on true completions 0.52 (13/25)**. Entry-L reference (its pool was LAST/final claims, n=140): AUROC 0.9011, Brier 0.0861, tp14 fp1 tn113 fn12, precision 0.933, false-alarm 0.0088, reject-of-positives 0.462. The ~0.05 AUROC gap is the expected distribution shift (92/149 of this pool are early or mid-session claim-shaped prose, not polished final answers); the operating point behaves almost identically (precision and false-alarm within a point of entry L). Under the run's actual semantics nothing was withheld at these rejects; under the registered per-session policy the 0.52 reject rate would have cost one bounded retry on 13 sessions — the number the successor A/B's arm machinery will price.
 
 **Entry N is now closed: integration run + audit pool complete, both disclosures recorded before any metric, all four registered questions answered.** Next registered step: the successor A/B (chain + mechanical gate + dial-enforce vs vanilla + the same prompt fix) — draft its registration when the user says go. Standing reminder: ~21 commits await the user's push.
+
+### 2026-09-26, ~19:40 — ENTRY O REGISTRATION — **LIVE**: THE DECISIVE A/B (the verdict run for the verifier arc, entries L–N). Pre-registered in full before any session; one execution with the standing crash-fix exception (disclosed fix before any metric); no early stop, no interim looks.
+
+**The question (the one entry N deliberately deferred):** does the full read-and-route stack — chain + mechanical gate + dial-enforce — make the agent complete MORE tasks than the bare model given the same prompt and tools? Entry N proved the instrument works and what it costs; this entry prices it.
+
+**Arms (both through the SAME host proxy :8990 and combined server :8997, no config changes):**
+
+- **GUARDED** — wire model `poc-proxy-12b/gemma-12b-decide` → decide arm: chain reads, answer gates, and the dial at frozen τ* with v3.17.1 PER-SESSION semantics (the fixed keying; the veto→continue→re-claim loop finally runs for every session — Q2's veto cost rides along here).
+- **VANILLA** — wire model `poc-proxy-12b/gemma-4-12b-it` → remote passthrough: the bare model, same prompt, same browser tools, no chain, no dial, no review. The v6 backend config already serves both modes (chain_model → decide, wire_model → remote); the dial hooks live only in the decide path, so vanilla serving is untouched by construction.
+- The PROMPT is the current fixed template (the one carrying the prompt fix), byte-identical for both arms — the tested delta is the serving architecture alone.
+
+**Design.** 24 tasks × 7 seeds = 168 task instances from ONE fresh CSPRNG draw (SEED_RNG = 8798192118, drawn 2026-09-26 before any session), disjoint from v1–v6. Each instance runs ONCE PER ARM with the SAME seed (paired pages), strictly alternating which arm goes first (84/84 balance) so time-of-day drift cannot alias with an arm. 336 sessions total; at v6's cadence ≈ 26 h. Runner: `eval/reports/entry_o/run_v7.py` (mechanical v6 delta + arm alternation; plan mode ran clean, proving the six exclusion files were read). Sanity: one throwaway session per arm (seeds 7947859754 / 5588567731) into sanity_runs_v7/ before the sweep.
+
+**The verdict bar (frozen now, before session 1):** primary metric per arm = success rate = (sessions with raw > 0) / 168 — sessions with no terminal page state count as NOT success (conservative, symmetric, no exclusions, no discretion). **GUARDED is the verdict iff success_rate_guarded − success_rate_vanilla ≥ +0.10** (with base rates ~0.15–0.25 and n=168/arm, SE(diff) ≈ 0.04, so +0.10 ≈ 2.5 SE — a real effect, not noise). **Any gap < +0.10 registers as NO VERIFIED IMPROVEMENT** — the honest negative, including if vanilla wins. Secondary, descriptive only: paired W/L/T table over instances, wall time per arm, the guarded arm's dial records (per-session vetoes now live), and the first-claims dial audit exactly as entry N's.
+
+**Pre-committed violations.** Touching the bar or the prompt mid-run; stopping early on interim looks; excluding sessions post hoc; comparing against historical v5/v6 pools as if randomized (this A/B is self-contained); letting any dial score grant success — page reward alone decides truth, in both arms.
+
+**Launch lines.** Proxy already serving on the host from the v3.17.1 files (banner re-verified at launch: `enforce dial: enabled tau=0.326134 cap=2 dim=3840`); combined server unchanged. Sweep (laptop): sanity = `python3 eval/reports/entry_o/run_v7.py sanity`; sweep = `nohup python3 eval/reports/entry_o/run_v7.py sweep > /tmp/mw_bench/sweep_v7.log 2>&1 &`. Audit paths: laptop `main_v7.jsonl` (+`.cdp`), transcripts `main_runs_v7/`; host `decisions.jsonl` for dial records.
+
+**The frozen paired seed plan, printed in full before session 1 (task, seed, arm order):**
+
+```
+click-button 1916988017 guarded-then-vanilla
+click-button 9996980943 vanilla-then-guarded
+click-button 9698753838 guarded-then-vanilla
+click-button 7508737554 vanilla-then-guarded
+click-button 3352804566 guarded-then-vanilla
+click-button 9211980695 vanilla-then-guarded
+click-button 5834375871 guarded-then-vanilla
+click-button-sequence 5566672626 vanilla-then-guarded
+click-button-sequence 4673631358 guarded-then-vanilla
+click-button-sequence 9258463618 vanilla-then-guarded
+click-button-sequence 1127591294 guarded-then-vanilla
+click-button-sequence 8055276607 vanilla-then-guarded
+click-button-sequence 8939433016 guarded-then-vanilla
+click-button-sequence 2051066546 vanilla-then-guarded
+click-checkboxes 9912883001 guarded-then-vanilla
+click-checkboxes 9360824904 vanilla-then-guarded
+click-checkboxes 6256256565 guarded-then-vanilla
+click-checkboxes 4541927843 vanilla-then-guarded
+click-checkboxes 7392687681 guarded-then-vanilla
+click-checkboxes 7241587462 vanilla-then-guarded
+click-checkboxes 3958096920 guarded-then-vanilla
+click-collapsible 2534481399 vanilla-then-guarded
+click-collapsible 5145058327 guarded-then-vanilla
+click-collapsible 8449061342 vanilla-then-guarded
+click-collapsible 3948576978 guarded-then-vanilla
+click-collapsible 6279402593 vanilla-then-guarded
+click-collapsible 7772698651 guarded-then-vanilla
+click-collapsible 9426032108 vanilla-then-guarded
+click-dialog 7866784782 guarded-then-vanilla
+click-dialog 5418933919 vanilla-then-guarded
+click-dialog 6646759319 guarded-then-vanilla
+click-dialog 7001620004 vanilla-then-guarded
+click-dialog 7415018609 guarded-then-vanilla
+click-dialog 3017040106 vanilla-then-guarded
+click-dialog 4001251034 guarded-then-vanilla
+click-link 4966726487 vanilla-then-guarded
+click-link 3912673799 guarded-then-vanilla
+click-link 8708086385 vanilla-then-guarded
+click-link 6183102985 guarded-then-vanilla
+click-link 7730056971 vanilla-then-guarded
+click-link 5221128849 guarded-then-vanilla
+click-link 5284705571 vanilla-then-guarded
+click-option 3555482881 guarded-then-vanilla
+click-option 1649035373 vanilla-then-guarded
+click-option 8117284323 guarded-then-vanilla
+click-option 1167149130 vanilla-then-guarded
+click-option 9702960720 guarded-then-vanilla
+click-option 3510936415 vanilla-then-guarded
+click-option 6098803325 guarded-then-vanilla
+click-tab 2414511159 vanilla-then-guarded
+click-tab 4821140977 guarded-then-vanilla
+click-tab 1099639095 vanilla-then-guarded
+click-tab 2769973995 guarded-then-vanilla
+click-tab 9907156290 vanilla-then-guarded
+click-tab 5452275564 guarded-then-vanilla
+click-tab 1490649797 vanilla-then-guarded
+click-tab-2 3134153424 guarded-then-vanilla
+click-tab-2 3571212804 vanilla-then-guarded
+click-tab-2 2691612088 guarded-then-vanilla
+click-tab-2 9902913091 vanilla-then-guarded
+click-tab-2 9378827843 guarded-then-vanilla
+click-tab-2 6712766348 vanilla-then-guarded
+click-tab-2 6481874617 guarded-then-vanilla
+click-test 4409566226 vanilla-then-guarded
+click-test 5622275878 guarded-then-vanilla
+click-test 2729540282 vanilla-then-guarded
+click-test 4066730859 guarded-then-vanilla
+click-test 8414293073 vanilla-then-guarded
+click-test 4025653891 guarded-then-vanilla
+click-test 6039733407 vanilla-then-guarded
+click-widget 6464578197 guarded-then-vanilla
+click-widget 4315151796 vanilla-then-guarded
+click-widget 4602661723 guarded-then-vanilla
+click-widget 8488876816 vanilla-then-guarded
+click-widget 5366100200 guarded-then-vanilla
+click-widget 3181373795 vanilla-then-guarded
+click-widget 8943543703 guarded-then-vanilla
+enter-date 8343613443 vanilla-then-guarded
+enter-date 3294332508 guarded-then-vanilla
+enter-date 9916650162 vanilla-then-guarded
+enter-date 9449264480 guarded-then-vanilla
+enter-date 7830899367 vanilla-then-guarded
+enter-date 6417455001 guarded-then-vanilla
+enter-date 2819370471 vanilla-then-guarded
+enter-password 9594785138 guarded-then-vanilla
+enter-password 4812151325 vanilla-then-guarded
+enter-password 6629536108 guarded-then-vanilla
+enter-password 1595039356 vanilla-then-guarded
+enter-password 4775803454 guarded-then-vanilla
+enter-password 7307765888 vanilla-then-guarded
+enter-password 8462836832 guarded-then-vanilla
+enter-text 1506114515 vanilla-then-guarded
+enter-text 5086559780 guarded-then-vanilla
+enter-text 8105224663 vanilla-then-guarded
+enter-text 7884402045 guarded-then-vanilla
+enter-text 1041341927 vanilla-then-guarded
+enter-text 1866082862 guarded-then-vanilla
+enter-text 4037664867 vanilla-then-guarded
+enter-text-2 9546364885 guarded-then-vanilla
+enter-text-2 3488751815 vanilla-then-guarded
+enter-text-2 7591801224 guarded-then-vanilla
+enter-text-2 7073188585 vanilla-then-guarded
+enter-text-2 3966352837 guarded-then-vanilla
+enter-text-2 9730236448 vanilla-then-guarded
+enter-text-2 3780526198 guarded-then-vanilla
+focus-text 2950226985 vanilla-then-guarded
+focus-text 7105990380 guarded-then-vanilla
+focus-text 8038594736 vanilla-then-guarded
+focus-text 2539167612 guarded-then-vanilla
+focus-text 8752780462 vanilla-then-guarded
+focus-text 6878903780 guarded-then-vanilla
+focus-text 2946939348 vanilla-then-guarded
+focus-text-2 2257876988 guarded-then-vanilla
+focus-text-2 8034821248 vanilla-then-guarded
+focus-text-2 9585891692 guarded-then-vanilla
+focus-text-2 8025453306 vanilla-then-guarded
+focus-text-2 9692453177 guarded-then-vanilla
+focus-text-2 6468424087 vanilla-then-guarded
+focus-text-2 1075093141 guarded-then-vanilla
+form-sequence 8850130307 vanilla-then-guarded
+form-sequence 3279902382 guarded-then-vanilla
+form-sequence 7399174293 vanilla-then-guarded
+form-sequence 8726807491 guarded-then-vanilla
+form-sequence 6287442539 vanilla-then-guarded
+form-sequence 3227256023 guarded-then-vanilla
+form-sequence 3663362218 vanilla-then-guarded
+login-user 5167922054 guarded-then-vanilla
+login-user 2659208609 vanilla-then-guarded
+login-user 2749970724 guarded-then-vanilla
+login-user 5824758489 vanilla-then-guarded
+login-user 5230392109 guarded-then-vanilla
+login-user 2695219026 vanilla-then-guarded
+login-user 9042955777 guarded-then-vanilla
+login-user-popup 8854327292 vanilla-then-guarded
+login-user-popup 9711348676 guarded-then-vanilla
+login-user-popup 3948774039 vanilla-then-guarded
+login-user-popup 9178723217 guarded-then-vanilla
+login-user-popup 3447864904 vanilla-then-guarded
+login-user-popup 4398242723 guarded-then-vanilla
+login-user-popup 9055000831 vanilla-then-guarded
+navigate-tree 5910182273 guarded-then-vanilla
+navigate-tree 9825748691 vanilla-then-guarded
+navigate-tree 3088182020 guarded-then-vanilla
+navigate-tree 7452404481 vanilla-then-guarded
+navigate-tree 5670728362 guarded-then-vanilla
+navigate-tree 2690387113 vanilla-then-guarded
+navigate-tree 8099322131 guarded-then-vanilla
+read-table 5564338640 vanilla-then-guarded
+read-table 4692924585 guarded-then-vanilla
+read-table 2357265271 vanilla-then-guarded
+read-table 5256287027 guarded-then-vanilla
+read-table 5449869047 vanilla-then-guarded
+read-table 7474123654 guarded-then-vanilla
+read-table 4703275530 vanilla-then-guarded
+search-engine 5693127201 guarded-then-vanilla
+search-engine 8891309881 vanilla-then-guarded
+search-engine 3331203018 guarded-then-vanilla
+search-engine 8346310213 vanilla-then-guarded
+search-engine 6118387630 guarded-then-vanilla
+search-engine 2691745847 vanilla-then-guarded
+search-engine 6948559290 guarded-then-vanilla
+use-autocomplete 1720653505 vanilla-then-guarded
+use-autocomplete 6725336277 guarded-then-vanilla
+use-autocomplete 8552720772 vanilla-then-guarded
+use-autocomplete 8922109674 guarded-then-vanilla
+use-autocomplete 3583882649 vanilla-then-guarded
+use-autocomplete 9635442668 guarded-then-vanilla
+use-autocomplete 5758557398 vanilla-then-guarded
+```
+
+**Pre-launch host state (verified at registration):** proxy serving with the dial banner on; combined server up at ~10.5 GB; page server :8077 serving; both omp provider entries present in models.yml (dormant). Nothing to change — the arms differ only in the requested model name.
