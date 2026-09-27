@@ -88,6 +88,19 @@ The reversal worth underlining: **asking the model in words carries no signal; r
 
 ---
 
+## The conclusion, in plain language (Sep 27)
+
+**We built a cheap "supervisor" for a worker (one frozen AI model), and the honest conclusion is: the supervisor can reliably tell when the worker is lying about being finished — but catching the lie and sending him back to work doesn't get more work done. It actually got slightly *less* done, at twice the cost.**
+
+1. **The worker's words tell you nothing; his "body language" tells you almost everything.** When the model says "I'm done," its text is just noise for judging whether that's true. But a tiny math probe reading the model's internal state — its hidden fingerprints — catches a false "done" about 9 times in 10, and held that up on three fresh test batches. Nobody trained the model to expose this; the information was just sitting there.
+2. **A good lie detector still doesn't buy you success.** In the final head-to-head (336 paired tasks): supervised **23** vs unsupervised **29** — worse, at 2× the time. Most of the tasks the worker fails, he fails because he *can't do the task*, not because he's overconfident; sending him back just gives him more time to fail. (Silver lining: the supervised worker almost never walks away claiming a false victory.)
+3. **The supervisor earns its keep on a different job: catching wasted time.** A second tiny head spots "the worker keeps clicking the same button on an unchanged page" — spinning in circles. It passed its quality bar on the first try, and it fires exactly when sessions get stuck, including ones that already succeeded and then kept pointlessly going. A clock-saver, not a success-saver.
+4. **The expensive part is the training examples, not the cleverness.** A ready-made "decision AI" from the open-source world (Jev-Omni) scored *worse than a coin flip* on our tasks, despite great scores on its own home turf. The lesson: you can't borrow judgment. You have to label real examples from your own job — and our pipeline of automatically labeled examples is the actual asset.
+
+**Bottom line:** the reflex layer works for cheap pointing decisions and for detecting lies and loops, but it can't raise a worker who lacks the skill. The next sensible move is letting the loop-detector pull the brake to save time — and the long-term bet is building this judgment *into* the model itself rather than bolting it on.
+
+---
+
 ## Quickstart
 
 ```bash

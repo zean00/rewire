@@ -329,6 +329,8 @@
       <span class="chip">◐ hardest benchmark: an honest tie — and we know exactly why</span>
       <span class="chip">✗ asking the model in words: no signal — measured five ways</span>
       <span class="chip good">✓ reading its state vectors: 0.90 AUROC on fresh sessions — the dial ships</span>
+      <span class="chip">✗ the decisive A/B: the dial catches the lies, completions still 13.7% vs vanilla 17.3% — honest negative</span>
+      <span class="chip good">✓ the stuck/loop head passed its bar on the first try — the time-saver</span>
     </div>
   </div>
 </header>
@@ -755,6 +757,11 @@
         <p>The written bar — <b>AUROC ≥ 0.75 and Brier better than the constant predictor</b> — killed five read families. The state-vector dial cleared it on fresh sessions (<span class="mono">0.9011 / 0.0861 vs 0.1512</span>) and now ships as the GATE's completion-claim verifier. The discipline never bent; the instrument changed.</p>
       </div>
     </div>
+
+    <div class="verdict reveal" style="margin-top:26px">
+      <div class="q" style="font-size:1.02rem">The whole project, in plain words: <b>we built a cheap supervisor for a worker — one frozen AI model — and the honest result is that the supervisor can reliably tell when the worker is lying about being finished, but catching the lie and sending him back doesn't get more work done</b> (supervised 23 vs unsupervised 29 of 168 paired tasks, at twice the cost). Four findings: <b>(1)</b> the worker's words carry no signal about whether he's done; his internal "body language" carries almost all of it — a tiny probe catches a false "done" ~9 times in 10, on three fresh batches. <b>(2)</b> A good lie detector still doesn't buy success — most failures are <i>can't</i>, not <i>overconfidence</i>. <b>(3)</b> The supervisor earns its keep on a different job: a second head that spots "same click, unchanged page" — spinning in circles — passed its bar on the first try and targets exactly the wasted time. A clock-saver, not a success-saver. <b>(4)</b> The expensive part is the labeled examples, not the cleverness — a ready-made decision model scored worse than a coin flip on our tasks despite excellent scores on its home turf; judgment must be grown from your own examples, not borrowed. <b>Bottom line:</b> the reflex works for cheap pointing decisions and for detecting lies and loops; it can't raise a worker who lacks the skill. Next lever: let the loop-detector pull the brake to save time. Long-term bet: train the judgment <i>into</i> the model itself.</div>
+      <div class="who">— the closing verdict, entries O &amp; P, Sep 27, 2026</div>
+    </div>
   </div>
 </section>
 
@@ -817,7 +824,7 @@
     </div>
 
     <div class="callout note">
-      <b>The one-line version:</b> Jev showed the industry a new kind of fast, grounded AI. The open-source wave raced to copy it. Rewire wired it <i>into</i> the model everyone already has — and the verdict is: the wiring works wherever there's real signal; the model's words carry no self-judgment but its state vectors carry nearly all of it (the dial: 0.90 AUROC on fresh sessions, shipped); the harness floor was the real boss fight; and the next move (decide as a native sense, trained into the architecture) now has a written spec, a frozen acceptance bar, and a measured proof that the bar can be met.
+      <b>The one-line version:</b> Jev showed the industry a new kind of fast, grounded AI. The open-source wave raced to copy it. Rewire wired it <i>into</i> the model everyone already has — and the final exams are in: the wiring works wherever there's real signal; the model's words carry no self-judgment but its state vectors carry nearly all of it (the dial: 0.90 AUROC on fresh sessions, shipped); a perfect lie detector still isn't a productivity boost (entry O — verification confirmed, completions not improved, recorded either way); the loop detector passed on the first try (entry P — the time-saver); and the next move (decide as a native sense, trained into the architecture) now has a written spec, a frozen acceptance bar, and a measured proof that the bar can be met.
     </div>
   </div>
 </section>
