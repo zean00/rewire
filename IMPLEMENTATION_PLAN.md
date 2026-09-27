@@ -2262,3 +2262,21 @@ changes power, not validity.
 
 Next (frozen): embed once on the host (entry_p_embed.py, states-sha chain
 asserts built in), then fit once, verdict recorded like any outcome.
+
+### 2026-09-27, ~20:50 — ENTRY P DISCLOSED ENDPOINT FIX (before any embedding was taken; the first launch never produced a vector).
+
+The embed script as registered hardcoded `127.0.0.1:8998` — the standalone
+embeddings-only server of the entry-L era. That server no longer exists:
+nothing listens on host loopback :8998 (the port now carries another
+service), so the first launch aborted at row 0 with connection refused —
+zero vectors persisted, no number taken. The registered instrument line
+since the entry-N correction is the **combined server** (gen line minus
+KV-quant plus `--embeddings --pooling last`), which was verified there to
+reproduce entry-L vectors bit-exactly (cos 1.000000 on sampled rows; fresh
+AUROC 0.9011 identical) and which the entry-O adjudicator used the same day
+(3840-d, 126/126 p-agreement). Fix: the endpoint is supplied via `--url`
+(base URL — the address never enters the repo); model (gemma-4-12b-it),
+pooling last, 3840-d, one-text-per-POST serial rule, and the 8-row bit-exact
+recheck are unchanged. The embed manifest's server field now names the
+registered combined line. Re-run executes only after this record, the fixed
+script, and the sync are committed.
