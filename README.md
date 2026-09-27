@@ -10,7 +10,7 @@
 | | |
 |---|---|
 | **DECIDE** | Scores candidate answers by reading the model's **logits directly** — zero generated tokens. One glance (~0.26 s) instead of writing an essay (~17 s). Because it only ever picks from options you list, it **cannot invent** an answer — it can be *wrong*, never *fabricated*. |
-| **GATE** | Knows when it doesn't know: calibrated confidence thresholds decide when to accept, think harder, or **ask a human** (10% ask rate at precision 1.0 in live web tests). From entry L on, GATE also runs the trained **completion-claim verifier dial** (see below). |
+| **GATE** | Knows when it doesn't know: calibrated confidence thresholds decide when to accept, think harder, or **ask a human** (10% ask rate at precision 1.0 in live web tests). From entry L on, GATE also runs the trained **completion-claim verifier dial** — and since entry N it *vetoes* claims it can't verify (see below). |
 | **THINK** | Full LLM generation — reasoning, multimodal input, free-form text — spent only where it's earned (~18% escalation on the offline suite). |
 
 The layer speaks the **OpenAI-compatible protocol**, so any existing agent harness can adopt it by changing one base URL:
@@ -71,6 +71,23 @@ The reversal worth underlining: **asking the model in words carries no signal; r
 
 ---
 
+## The dial goes live, the open replica flunks, the A/B runs (entries N–P, Sep 25–27)
+
+**Entry N — the dial starts steering (Sep 25–26).** Enforce mode promotes the frozen readout from logging to routing: at every completion claim, `p < τ*` → the claim is **vetoed**, the agent is told only that verification failed (no score, no threshold, nothing to game), and the episode re-opens — cap 2 vetoes, then the claim ships and the page reward still decides truth. Validated *before any enforce session existed*: 13 unit tests, a byte-parity replay of all 168 prior transcripts, a 4-gate live instrument smoke, and the live path reproducing entry L's adjudicated numbers **exactly** (0.9011 / 0.0861). The 168-session sweep ran under one disclosed mid-run bug (the per-session veto cap keyed globally — only session 1 saw vetoes; page rewards and the audit pool unaffected, disposition recorded before any metric). Integrity held everywhere: **149/149 recovered first claims logged with matching evidence hashes and recomputable scores, zero silent sub-τ accepts.** On the fresh first-claims pool — deliberately harder than entry L's, 92 of 149 being early or mid-session claim-shaped prose — the frozen operating point held: **AUROC 0.8487, Brier 0.0963 vs constant 0.1451, accept precision 92.3%, false-alarm rate 0.85%.**
+
+**Entry JO — the open-weights Jev replica, tested honestly (Sep 26).** The community [Jev-Omni Q4_K_M](https://huggingface.co/Reza2kn/Jev-Omni-Q4_K_M-GGUF) quant (gemma-4-12B backbone + the original FP32 decision head) was run through its own unmodified adapter on the *same* 140-claim pool where the dial scores 0.9011 / 0.0861: **AUROC 0.4028 — below chance — Brier 0.3715, ECE-10 0.3624. It fails all three pre-registered criteria.** The failure is structured, not noisy: of its 20 very-confident (p ≥ 0.9) accepts, exactly 1 was a true completion, and its accept set carries no information over the base rate. This is the project's core bet with a control group: a decision head with excellent calibration *on its own benchmark* (quantizer-reported ECE 0.04) does not transfer across distributions. **Calibration is paid for in labeled data on the serving distribution** — exactly what the dial's label factory (page-reward-labeled claim moments) builds, and what nothing else provides.
+
+**Entry O — the decisive A/B (Sep 26–27, RUNNING).** The question entries L–N deliberately deferred: does the full stack — chain reads + mechanical gates + dial-enforce — complete *more* tasks than the bare model given the same prompt and tools? 168 paired instances × 2 arms = 336 sessions on identical paired pages, arm order balanced. The verdict bar was frozen before session 1: **guarded wins iff the success-rate gap is ≥ +0.10; anything less records as NO VERIFIED IMPROVEMENT** — including if vanilla wins. *Results pending; they will be recorded here, either way.*
+
+**Entry P — the stuck/loop head (Sep 27, PRE-REGISTERED, not yet executed).** From the entry-O watch item (guarded sessions hitting the time cap at ~2.5× the vanilla rate — including sessions that had already *earned* success and then looped to the cap): a second dial head on the same frozen embedding — one more linear layer, zero extra model calls — trained to flag *repeating an action on an unchanged page*. Mechanical label rule, composite input block (page snapshot + last ≤8 action signatures), ~30% session-level validation split, entry-L instrument pins verbatim, entry-L gate shape (AUROC ≥ 0.75 AND Brier < constant). Registered, committed, and synced *before* the sweep closed — the build script was verified live refusing to run at 215/336 sessions. *Execution sequenced after entry-O adjudication and a corpus backup; results pending.*
+
+### Outside the lab: three independent sources converge (Sep 27)
+
+- **"Just Ask Jev" (ICLR 2027 submission, [arXiv:2609.29429](https://arxiv.org/abs/2609.29429))** benchmarks the *commercial* Jev across 44 alignment benchmarks: median AUROC 0.886 zero-shot and pooled ECE 0.047 — but the **per-distribution median ECE is 0.168** (a base-rate mismatch, not a ranking problem), label-free correction fails, ~10 own-distribution labels are the cheap fix, and per-generator score-shape drift means every model swap needs a calibration refit. Each of those independently reproduces a measured negative in this repo: thresholds never transfer; calibration is per-distribution or it lies; the dial is refit per backbone by design. The paper also validates entry JO from the other side — excellent on-benchmark calibration that does not survive contact with a new distribution.
+- **Two practitioner write-ups on Jev-in-agent-loops (Sep 2026)** converge on the same architecture from the field: the decision layer must sit *beside* the loop (routing decisions back through the generating model re-reads the full context — the "cache tax" makes pure routing ≈ 2/3 the cost of never routing); the decider cannot be the prover ("a confident answer cannot prove that a file was saved" — evidence in, judgment out); deploy shadow-first and switch over only when confidence bands match on your own traffic; and stuck-detection is the highest-value monitor to build next. The entry discipline *is* the shadow-first pattern; entry P *is* the stuck detector; and the write-ups' adversarial caveat (a page can talk a classifier into a false "done") is a registered concern for any future controller-mode entry.
+
+---
+
 ## Quickstart
 
 ```bash
@@ -122,18 +139,18 @@ rewire/
 │   ├── scoring/            #   D1 first-token logits · D2 sequence logprob · premask
 │   ├── calibration/        #   ECE / Brier / AUROC harness
 │   └── runtime.py          #   the decide → gate → think chain
-├── proxy/                  # omp_proxy.py — the OpenAI-compatible Rewire layer (v3.15.0)
+├── proxy/                  # omp_proxy.py — the OpenAI-compatible Rewire layer (v3.17.2) + dial_enforce.py
 ├── eval/                   # benchmark harnesses, datasets, frozen configs, reports
 │   ├── datasets/           #   toy_mcqa.jsonl · webreplay_v1/ (with MANIFEST)
-│   └── reports/            #   measurement records: PoC eras + entry_h…entry_m (the verifier dial)
+│   └── reports/            #   measurement records: PoC eras + entry_h…entry_p (dial, enforce, A/B, stuck head)
 ├── configs/                # model / thresholds / benchmark configs
 ├── examples/               # minimal DECIDE example
 ├── tests/                  # pytest suite
 ├── scripts/                # env check · optional host-sync helper
 ├── index.html              # the interactive story page (the Pages site root)
 ├── poc_report.html         # the full audit report (self-contained)
-├── POC_CONCLUSION.md       # structured conclusion: 7 PoC eras + the verifier-dial arc
-└── IMPLEMENTATION_PLAN.md  # the 1,600-line pre-registration ledger — the complete audit trail
+├── POC_CONCLUSION.md       # structured conclusion: 7 PoC eras + the verifier-dial arc + the dial goes live
+└── IMPLEMENTATION_PLAN.md  # the 2,100-line pre-registration ledger — the complete audit trail
 ```
 
 ## Method (why the numbers are believable)
@@ -148,7 +165,7 @@ Full methodology, per-experiment logs, and the decision record: [IMPLEMENTATION_
 
 ## Where this goes
 
-The PoC's last finding is its most provocative: the reflex works when it's *told* exactly what to score, and the model's untrained self-judgment carries no signal — in its words. Its state vectors are another matter: the verifier dial (above) cleared the written acceptance bar on fresh sessions and now ships as the GATE's completion-claim verifier. Next, in pre-registration order: **enforce mode** (the dial steering behavior — a rejected claim re-opens the episode, with the reject policy and retry cap frozen before it goes live), a **τ rebalance** (the frozen threshold sits at a conservative corner — 46% of genuine completions are sent back), and **mid-thought checkpoint reads** (score a thought *while* it happens, not only at its end). The endgame direction stands: **native decide** — decision heads trained into the backbone (typed outputs, calibrated confidence as a first-class objective), with the contract discipline, per-model calibration refits, and the written bar carried over as the spec any native implementation must beat — a bar that now has a measured proof it can be met. Mechanical gates first, model reads only where deterministic signals can't see.
+The PoC's last finding is its most provocative: the reflex works when it's *told* exactly what to score, and the model's untrained self-judgment carries no signal — in its words. Its state vectors are another matter: the verifier dial (above) cleared the written acceptance bar on fresh sessions and now ships as the GATE's completion-claim verifier. Enforce mode shipped (entry N — the dial now vetoes unverified claims, cap 2, nothing leaked to the agent). **The decisive A/B is running** (entry O, verdict bar frozen before session 1), a **stuck/loop head is pre-registered** (entry P — same embedding, one more linear layer), and behind them: a **τ rebalance** (the frozen threshold sits at a conservative corner — 46% of genuine completions are sent back), **controller graduation** (the stuck head acting on its own alerts, with hard code rules before the model and conservative defaults — the pattern the field converged on), and **mid-thought checkpoint reads** (score a thought *while* it happens, not only at its end). The endgame direction stands: **native decide** — decision heads trained into the backbone (typed outputs, calibrated confidence as a first-class objective), with the contract discipline, per-model calibration refits, and the written bar carried over as the spec any native implementation must beat — a bar that now has a measured proof it can be met, *and* a measured proof that skipping the per-distribution label cost fails (entry JO). Mechanical gates first, model reads only where deterministic signals can't see.
 
 ## Credits
 

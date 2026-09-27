@@ -268,7 +268,7 @@
 <!-- ============================== HERO ============================== -->
 <header class="hero">
   <div class="wrap">
-    <div class="badge">Rewire · a 7-day proof + a verifier dial · Sep 2026 · one frozen open model</div>
+    <div class="badge">Rewire · a 7-day proof + a verifier dial, live · Sep 2026 · one frozen open model · decisive A/B running</div>
     <h1><span class="g">Rewire</span></h1>
     <div class="tagline">We didn't retrain the model. We didn't touch the engine.<br>We added one layer between them — and suddenly the model had reflexes.</div>
     <p class="sub">Rewire is our answer to <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noopener">System One Jev</a>: instead of building a new fast-decision AI, or copying one, we <b>wired a fast, grounded "pointing" reflex directly into an existing LLM</b> — as a layer between the inference engine and its OpenAI-compatible API. The weights stay frozen. The engine stays untouched. Only the wiring changes.</p>
@@ -552,7 +552,7 @@
       </div>
     </div>
 
-    <h3>The journey, in eight eras</h3>
+    <h3>The journey, in nine eras</h3>
     <div class="timeline">
       <div class="titem reveal"><div class="tphase">Era 1 · the router</div><h4>Discovery: reading beats asking</h4><p>500-question shoot-out. Reflex-with-escape-hatch 0.856 @ 0.26 s; think-always 0.490 @ 17.29 s. The thesis is born.</p></div>
       <div class="titem reveal"><div class="tphase">Era 2 · web actions</div><h4>The reflex generalizes to real pages</h4><p>Gated re-read chain 0.356 vs 0.258 no-think (p ≈ 8×10⁻⁹). Batched reads make it 5× faster.</p></div>
@@ -562,6 +562,7 @@
       <div class="titem v reveal"><div class="tphase">Era 6 · the forensics</div><h4>Why the hardest benchmark tied — down to the exact line</h4><p>Autopsy of 147 failed episodes: 55 ended while the scoreline "Last reward: −1" was visibly on screen. The failure isn't reasoning; it's <b>reward-blindness</b>. A one-line regex gate catches all 55 — with zero false stops.</p></div>
       <div class="titem reveal"><div class="tphase">Era 7 · the verdict</div><h4>The chain earns its complexity where signal exists — and says so where it doesn't</h4><p>Strategic decision recorded, with a written bar for revisiting every suspended piece: <span class="mono">AUROC ≥ 0.75 AND Brier under the constant</span>, on fresh sessions. See the verdict below.</p></div>
       <div class="titem v reveal"><div class="tphase">Era 8 · the reversal</div><h4>Inspired by a public verifier (CLM), the state-vector dial cleared the frozen bar — live</h4><p>Five read families had failed the bar. The sixth — a tiny calibrated head over frozen encoder state vectors — went 0.9889 on a second encoder, 0.8867 on the chain's own backbone, then <b>0.9011 on 168 brand-new sessions it had never seen</b>. GATE PASSED. The dial ships. <a href="#dial">The full ladder ↓</a></p></div>
+      <div class="titem v reveal"><div class="tphase">Era 9 · live</div><h4>The dial started steering — and the open Jev replica flunked the same exam</h4><p>Entry N: the frozen dial went from logging to routing — a sub-τ completion claim is <b>vetoed</b> and the episode re-opens. Integrity held on all 149 fresh claims (zero silent passes; one disclosed mid-run bug, disposition recorded before any metric), and the harder first-claims audit landed at <b>0.8487 AUROC</b> vs constant 0.1451. Entry JO: the community Jev-Omni Q4 scored <b class="worst">below chance</b> (0.40) on the same pool where the dial scores 0.90 — calibration is paid for in own-distribution labels, not borrowed. Now running: <b>the decisive A/B</b> (entry O), verdict bar frozen before session 1.</p></div>
     </div>
   </div>
 </section>
@@ -646,6 +647,11 @@
         <span class="tag red">falsified</span>
         <h4>Jev-style sidecar, 82.9%</h4>
         <p>Our first Jev-replica attempt scored 82.9% on the sidecar benchmark — respectable, until audit day: the <b>constant predictor scores 82.9%</b>. Killed at its own gate. This is what pre-registration is for.</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag red">falsified — the real one</span>
+        <h4>The open Jev replica, 0.40</h4>
+        <p>Jev-Omni Q4_K_M — a pre-trained decision head with a reported <b class="mono">0.04 ECE on its own benchmark</b> — scored <b class="mono worst">AUROC 0.4028, below chance</b> on the dial's own 140-claim pool, where the dial scores 0.9011. Of its 20 very-confident accepts, exactly 1 was real. Calibration doesn't transfer; it's paid for in labeled data on the serving distribution — which is the dial's label factory, and the moat.</p>
       </div>
       <div class="card reveal">
         <span class="tag green">caught &amp; fixed</span>
@@ -739,9 +745,9 @@
         <p>Candidate reads, batched and parity-checked; calibrated thresholds; the ask-a-human ranking. This is the part that turned 0/5 into 5/5.</p>
       </div>
       <div class="card reveal">
-        <span class="tag amber">decisive test next</span>
+        <span class="tag amber">decisive test — running</span>
         <h4>The A/B that settles it</h4>
-        <p>Rewired chain + mechanical gates <i>vs</i> vanilla + prompt fixes alone, same tasks, pre-registered. If vanilla with good prompts matches the chain, the chain must shrink. We suspect it won't — but the experiment, not the suspicion, decides.</p>
+        <p>Now live (entry O): rewired chain + mechanical gates + dial-enforce <i>vs</i> vanilla + the same prompt fix — 168 paired instances per arm, identical paired pages, arm order balanced. The verdict bar was frozen before session 1: guarded wins iff the success-rate gap is <b class="mono">≥ +0.10</b>; anything less records as <b>NO VERIFIED IMPROVEMENT</b>, including if vanilla wins. Results will be recorded here after adjudication — either way.</p>
       </div>
       <div class="card reveal">
         <span class="tag green">bar written → bar met</span>
@@ -794,9 +800,9 @@
         <p>The regex beat the neurons. Generalize it: an inventory of deterministic harness signals (scorelines, timers, error states) wired as hard gates — with model reads spent only on the residual they can't see.</p>
       </div>
       <div class="card reveal">
-        <span class="tag green">next wire</span>
-        <h4>Enforce mode</h4>
-        <p>Today the dial verifies; next it steers. A rejected completion claim re-opens the episode — with the reject policy, retry cap, and escalation path frozen in a pre-registration before it goes live. The harness-floor regex and the dial become one gate stack.</p>
+        <span class="tag green">live — and the next wire</span>
+        <h4>Enforce mode → stuck detection</h4>
+        <p>Done (entry N): the dial verifies <i>and steers</i> — a rejected completion claim re-opens the episode, cap 2, and the agent is told nothing about the score or threshold, so there's nothing to game. Pre-registered next (entry P): a stuck/loop head on the same embedding — one more linear layer, zero extra model calls — aimed at the measured waste of sessions that finish the task and then loop to the time cap.</p>
       </div>
       <div class="card reveal">
         <span class="tag cyan">measured headroom</span>
@@ -818,14 +824,14 @@
 
 <footer>
   <div class="wrap">
-    <div><b style="color:var(--text)">Rewire</b> · a decision/read-and-route layer over one frozen LLM · Sep 2026 · the 7-day PoC + the verifier dial</div>
+    <div><b style="color:var(--text)">Rewire</b> · a decision/read-and-route layer over one frozen LLM · Sep 2026 · the 7-day PoC + the verifier dial, live since entry N</div>
     <div class="flinks">
       <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noopener">System One Models &amp; Jev (TypeSafe)</a>
       <a href="https://github.com/Contrastive-LM/CLM" target="_blank" rel="noopener">Contrastive-LM (CLM)</a>
       <a href="https://github.com/taeold/djev-run" target="_blank" rel="noopener">djev-run</a>
       <a href="https://github.com/llama.cpp" target="_blank" rel="noopener">llama.cpp</a>
     </div>
-    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (1,600-line experiment ledger, entries A–M)</div>
+    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (2,100-line experiment ledger, entries A–P)</div>
     <div style="margin-top:10px">Model: one frozen open-weights 4B throughout (12B spot-check) · verifier dial: frozen heads over stock embeddings (Qwen3-8B, Gemma-4-12B) · nothing was ever fine-tuned · all numbers pre-registered · negatives reported as fully as positives.</div>
   </div>
 </footer>

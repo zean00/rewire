@@ -1,0 +1,197 @@
+{
+  "first": "persian-baseline-full-v1",
+  "second": "persian-q4-full-gpu-v1",
+  "all": {
+    "items": 624,
+    "first_correct": 586,
+    "second_correct": 601,
+    "both_correct": 571,
+    "first_only": 15,
+    "second_only": 30,
+    "both_wrong": 8,
+    "first_invalid": 0,
+    "second_invalid": 0
+  },
+  "phase": {
+    "english": {
+      "items": 48,
+      "first_correct": 45,
+      "second_correct": 48,
+      "both_correct": 45,
+      "first_only": 0,
+      "second_only": 3,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "main": {
+      "items": 480,
+      "first_correct": 451,
+      "second_correct": 463,
+      "both_correct": 440,
+      "first_only": 11,
+      "second_only": 23,
+      "both_wrong": 6,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "repeat": {
+      "items": 96,
+      "first_correct": 90,
+      "second_correct": 90,
+      "both_correct": 86,
+      "first_only": 4,
+      "second_only": 4,
+      "both_wrong": 2,
+      "first_invalid": 0,
+      "second_invalid": 0
+    }
+  },
+  "primitive": {
+    "choice": {
+      "items": 240,
+      "first_correct": 229,
+      "second_correct": 237,
+      "both_correct": 226,
+      "first_only": 3,
+      "second_only": 11,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "noul": {
+      "items": 160,
+      "first_correct": 152,
+      "second_correct": 150,
+      "both_correct": 145,
+      "first_only": 7,
+      "second_only": 5,
+      "both_wrong": 3,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "score": {
+      "items": 80,
+      "first_correct": 70,
+      "second_correct": 76,
+      "both_correct": 69,
+      "first_only": 1,
+      "second_only": 7,
+      "both_wrong": 3,
+      "first_invalid": 0,
+      "second_invalid": 0
+    }
+  },
+  "category": {
+    "extraction": {
+      "items": 48,
+      "first_correct": 46,
+      "second_correct": 47,
+      "both_correct": 46,
+      "first_only": 0,
+      "second_only": 1,
+      "both_wrong": 1,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "idioms": {
+      "items": 48,
+      "first_correct": 45,
+      "second_correct": 47,
+      "both_correct": 44,
+      "first_only": 1,
+      "second_only": 3,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "intent": {
+      "items": 48,
+      "first_correct": 45,
+      "second_correct": 48,
+      "both_correct": 45,
+      "first_only": 0,
+      "second_only": 3,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "moderation": {
+      "items": 48,
+      "first_correct": 45,
+      "second_correct": 45,
+      "both_correct": 42,
+      "first_only": 3,
+      "second_only": 3,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "negation": {
+      "items": 48,
+      "first_correct": 45,
+      "second_correct": 45,
+      "both_correct": 43,
+      "first_only": 2,
+      "second_only": 2,
+      "both_wrong": 1,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "pragmatics": {
+      "items": 48,
+      "first_correct": 48,
+      "second_correct": 47,
+      "both_correct": 47,
+      "first_only": 1,
+      "second_only": 0,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "reading": {
+      "items": 48,
+      "first_correct": 46,
+      "second_correct": 47,
+      "both_correct": 45,
+      "first_only": 1,
+      "second_only": 2,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "scenarios": {
+      "items": 48,
+      "first_correct": 39,
+      "second_correct": 42,
+      "both_correct": 37,
+      "first_only": 2,
+      "second_only": 5,
+      "both_wrong": 4,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "semantic": {
+      "items": 48,
+      "first_correct": 44,
+      "second_correct": 47,
+      "both_correct": 43,
+      "first_only": 1,
+      "second_only": 4,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    },
+    "sentiment": {
+      "items": 48,
+      "first_correct": 48,
+      "second_correct": 48,
+      "both_correct": 48,
+      "first_only": 0,
+      "second_only": 0,
+      "both_wrong": 0,
+      "first_invalid": 0,
+      "second_invalid": 0
+    }
+  }
+}
