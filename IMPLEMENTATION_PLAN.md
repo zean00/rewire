@@ -2410,3 +2410,29 @@ the adversarial concern the two external sources raised for this stack.
 
 **Artifacts.** `eval/reports/entry_q/entry_q_adversarial.py` (one execution),
 `entry_q_results.json` (all 160 scored rows + per-template table).
+
+---
+
+## 2026-09-28 — ENTRY R PRE-REGISTRATION — the mechanical brake arm (the last experiment, item 2). Frozen before any v8 data exists.
+
+**Question.** Does a MECHANICAL stuck-loop brake — the entry-P loop rule evaluated on the wire BEFORE the model sees the request — delivered on the guarded serving (chain, dial removed), (a) lift completions past vanilla via one fresh-seed retry of braked failures (PRIMARY), and (b) cut wall time versus guarded (SECONDARY)? Motivation from v7: the guarded arm is 2.04x slower (339.8s vs 166.8s mean wall) at no completion benefit (13.69% vs 17.26%); cap-hits 76 vs 20; the dial only intervenes at completion CLAIMS, while stuck loops burn their time at the ACTION layer. Entry P's label factory supplies the loop detector; here it routes.
+
+**Arm.** Single arm `brake`, wire model `poc-proxy-12b/gemma-12b-brake`. Serving is the v7 guarded chain byte-for-byte (same wire model, chain model, gates, extra payload) with exactly two deltas: (1) the v8 backend config OMITS the dial block — `dial_enforce.init(None)` disables the dial by config, the completion-review stays off, nothing else in the serving path changes; (2) the mechanical brake below is consulted at EVERY brake-arm request before any chain compute.
+
+**Brake rule (entry-P label rule verbatim, on the wire).**
+- Acting turn: an assistant tool call whose `code` argument carries an intent comment matching `^[ \t]*//[ \t]*(click|type|select|check)\b` (first such line, multiline). sig = that line, whitespace-collapsed, otherwise verbatim — element refs included (corpus sigs read e.g. `// click "START" @e18`; identity is exact-string).
+- Snapshot: the newest NON-BLANK tool result text, whitespace-compacted, 8000-char cap (`ckpt_rubric.build_evidence` on the wire; the entry-N byte-parity smoke covers this construction).
+- FIRE iff: within the trailing window of 8 acting turns (inclusive of the most recent acting turn) some sig occurs >= 3 times, AND the snapshot is identical (exact string) at all of those occurrences AND at the current request (the newest non-blank tool result at the end of the messages — the state the pending action would land on). If the page just changed, the pending action might be recovery, so no fire.
+- On FIRE the request never reaches the model: the frozen note ships as a prose-only completion (no tool calls, so the harness ends the episode): `BRAKE (mechanical): the identical action has been attempted 3+ times on an unchanged page. The episode is terminated. Report your final answer now.`
+- The acting-turn sequence is reconstructed from the request's messages at every request — no server-side session state. Harness compaction can only drop old occurrences, which the identical-snapshot requirement then fails closed. Any internal brake error logs `brake-error` and serves on (the dial's disclosed fail-open posture).
+
+**Runner** (`eval/reports/entry_r/run_v8.py`): the SAME 168 (task, seed) pairs as v7 (SEED_RNG 8798192118; plan-time assertion that every seed and its retry seed are disjoint from v1-v7 and from each other), same PROMPT, same caps (omp 480s, page 120s). RETRY RULE (frozen): iff the primary transcript contains `BRAKE (mechanical)` AND the instance is not a success (no session with raw > 0), run ONE retry at seed2 = seed + 1. Instance success = any of its sessions' raw > 0; instance wall = sum of its sessions' wall_s. Session rows -> `/tmp/mw_bench/main_v8.jsonl` (+ `.cdp` sidecar), instance rollups -> `/tmp/mw_bench/main_v8_instances.jsonl`; resumable by session tag and instance key. Expected volume ~168 + up to 168 retries (~16 h).
+
+**Bars (frozen now).**
+- PRIMARY (completions): brake instance-success − v7-vanilla session rate (29/168 = 17.26%) >= +0.10 -> **BRAKE WINS**. Honest framing, recorded now: two guarded-rate attempts, if independent, give ~25.6% — +8.4pp, just short of this bar; the bar therefore asks whether braked-failure retries succeed ABOVE the guarded base rate. Measured, not assumed.
+- SECONDARY (time): brake instance wall-mean <= 0.8 x v7-guarded wall-mean (0.8 x 339.8s = 271.8s) AND instance-success >= guarded − 0.03 (>= 10.69%) -> **BRAKE DELIVERS TIME**.
+- Both bars read on the 168-instance plan; retries are part of the arm.
+
+**Descriptives (no bars):** brake fire rate (sessions and instances), braked-session success, retry success rate, wall distributions by outcome, and a ZERO-COST brake replay over the CLOSED v7 guarded transcripts (`eval/reports/entry_r/brake_replay.py`): per-session first-fire point, wall at fire, counterfactual savings — run before the sweep as the rule's sanity check on real data (the vanilla arm never emits intent comments, so the rule cannot fire there — corpus observation from entry P).
+
+**Sequencing / integrity.** Register -> implement (`proxy/brake.py`, omp_proxy v3.18.0 dispatch, v8 config) -> unit-smoke the module on synthetic wire shapes -> replay sanity -> commit + sync -> ps-verified relaunch of the :8990 proxy with the v8 config -> live sanity session(s) -> ONE sweep execution (resumable; any disclosed fix is appended to this ledger BEFORE any re-run) -> adjudicate on the frozen bars from /tmp/mw_bench records only -> verdict appended here. The standing :8999 proxy, the combined server :8997, and the local page server :8077 are untouched.
