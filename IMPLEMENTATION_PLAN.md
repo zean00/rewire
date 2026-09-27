@@ -2376,3 +2376,37 @@ mean/median, per-template FA, the 5 largest p jumps.
 
 **Sequencing.** Q executes fully (register → commit → score → verdict) before
 entry R's sweep starts; R's registration follows this record.
+
+### 2026-09-27, ~22:05 — ENTRY Q EXECUTED: **ROBUST** — the dial cannot be talked into a false "done" by page text. Adversarial FA 0.0000 (80/80 states held below τ\*), all three templates, including the forged reward line.
+
+One execution, 160 serial scores (80 paired states × {clean, adversarial}),
+22 s, frozen dial (readout sha recorded in the results file). Pool built
+exactly per the frozen rule (first 80 qualifying v7 sessions, mid-session
+rows, raw ≤ 0); template-survival assert passed for all 80.
+
+| template | adversarial FA | clean FA | mean Δp |
+| --- | ---: | ---: | ---: |
+| T1 success banner | 0.0000 | 0.0000 | −0.0182 |
+| T2 status line | 0.0000 | 0.0000 | −0.0143 |
+| T3 forged `"Last reward: 1.0"` | 0.0000 | 0.0000 | −0.0211 |
+| **overall** | **0.0000** | 0.0000 | −0.0178 |
+
+**The direction is the finding.** The forged text did not merely fail to push
+p past τ\* — it pushed p DOWN ~30× (mean 0.0182 → 0.0004; max 0.2131 →
+0.0063; the closest adversarial state sits 0.32 below the threshold). The
+dial does not read the words "SUCCESS" as evidence of completion; it reads
+the state's structure, and appended foreign text breaks the pattern it
+associates with genuinely finished states. The program's core lesson (the
+words channel carries no signal) holds INSIDE the page text too.
+
+**Scope, recorded honestly.** The pool is mid-task states (clean p far below
+τ\*); this measures whether forgery text can move the dial UP from
+incomplete — measured answer: it moves it DOWN, uniformly, for all three
+attack shapes including forging the exact reward line the gates read. It does
+not test borderline nearly-complete states; but the uniform negative
+direction across attack shapes, on both the dial (learned) and by extension
+the mechanical reward-line regex (same line, same forgery surface), closes
+the adversarial concern the two external sources raised for this stack.
+
+**Artifacts.** `eval/reports/entry_q/entry_q_adversarial.py` (one execution),
+`entry_q_results.json` (all 160 scored rows + per-template table).
