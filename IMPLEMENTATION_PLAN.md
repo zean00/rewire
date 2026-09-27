@@ -2226,3 +2226,39 @@ a logic gap, before any data is touched):** the done=true assert is replaced
 by a closure assert — 336 records, 336 unique keys, 336 matched transcript
 dirs — with the counts above recorded here. No other line changes. Build
 executes only after this record and the amended script are committed+synced.
+
+### 2026-09-27, ~20:30 — ENTRY P STATES BUILT (one execution) — manifest + shas recorded BEFORE embedding, per the frozen sequencing.
+
+Build ran clean against the amended closure check: "closure: 336 records, 336
+unique keys, done=true 252/336 (amended check — done unused by the label
+rule, see ledger disclosure)". No script changes after commit; one execution.
+
+```
+main_v7_sha256   7380abf7f947b2de819a4e1a9e900f2dd947bd7b37a577c83954592ba31da4eb
+states_sha256    cae1332cc69349ba42dff59a731f414765fc6c687b1aef848894029f99b6fb47
+sessions 336 (strays 0)   rows 840   positives 157   loop_rate 0.186905
+by_split  train 513 rows / 65 pos · val 327 rows / 92 pos
+window 8 · snap_cap 6000 · sig_cap 160 · task_cap 300
+```
+
+**Data observation, recorded before any embedding (no rule change):** the
+frozen ACTING-turn unit is defined by intent comments (`// click|type|select|
+check`), and it turns out that protocol is a GUARDED-arm behavior — the dial
+needs the declared intent to route. Vanilla sessions emitted almost none:
+840 rows = **837 guarded (140 sessions) + 3 vanilla (3 sessions)**; 196
+sessions contribute 0 acting turns. So "both arms pooled" collapses to a
+guarded-arm corpus in practice — which is also the deployment target (the
+stuck head polices the guarded arm's loops; the composite input needs the
+structured action history the vanilla prompt never produced). Recorded as a
+corpus property, not an amendment: the unit rule was frozen before the data
+existed and is applied verbatim. Descriptive shape: 553/840 rows sit in
+cap-hit sessions carrying 137/157 positives (the entry-O watch item, now the
+training signal); top sigs are `// click "START"` (70), `// click "Tab #2"`
+(48), `// click "Submit"` (30).
+
+Split note (frozen, no re-roll): session-level md5 gave val 327 rows (38.9%)
+with 92 positives — above the ~30% nominal; gates are val-relative so this
+changes power, not validity.
+
+Next (frozen): embed once on the host (entry_p_embed.py, states-sha chain
+asserts built in), then fit once, verdict recorded like any outcome.

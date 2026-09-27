@@ -1,0 +1,33 @@
+{
+ "main_v7_sha256": "7380abf7f947b2de819a4e1a9e900f2dd947bd7b37a577c83954592ba31da4eb",
+ "states_sha256": "cae1332cc69349ba42dff59a731f414765fc6c687b1aef848894029f99b6fb47",
+ "sessions": 336,
+ "stray_dirs_excluded": 0,
+ "rows": 840,
+ "positives": 157,
+ "loop_rate": 0.186905,
+ "by_split": {
+  "train": {
+   "n": 513,
+   "pos": 65
+  },
+  "val": {
+   "n": 327,
+   "pos": 92
+  }
+ },
+ "by_arm": {
+  "vanilla": {
+   "rows": 3,
+   "pos": 0
+  },
+  "guarded": {
+   "rows": 837,
+   "pos": 157
+  }
+ },
+ "window": 8,
+ "snap_cap": 6000,
+ "sig_cap": 160,
+ "task_cap": 300
+}
