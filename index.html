@@ -268,7 +268,7 @@
 <!-- ============================== HERO ============================== -->
 <header class="hero">
   <div class="wrap">
-    <div class="badge">Rewire · a 7-day proof + a verifier dial, live · Sep 2026 · one frozen open model · decisive A/B running</div>
+    <div class="badge">Rewire · a 7-day proof + a verifier dial, live · Sep 2026 · one frozen open model · decisive A/B answered · stuck head passed</div>
     <h1><span class="g">Rewire</span></h1>
     <div class="tagline">We didn't retrain the model. We didn't touch the engine.<br>We added one layer between them — and suddenly the model had reflexes.</div>
     <p class="sub">Rewire is our answer to <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noopener">System One Jev</a>: instead of building a new fast-decision AI, or copying one, we <b>wired a fast, grounded "pointing" reflex directly into an existing LLM</b> — as a layer between the inference engine and its OpenAI-compatible API. The weights stay frozen. The engine stays untouched. Only the wiring changes.</p>
@@ -562,7 +562,7 @@
       <div class="titem v reveal"><div class="tphase">Era 6 · the forensics</div><h4>Why the hardest benchmark tied — down to the exact line</h4><p>Autopsy of 147 failed episodes: 55 ended while the scoreline "Last reward: −1" was visibly on screen. The failure isn't reasoning; it's <b>reward-blindness</b>. A one-line regex gate catches all 55 — with zero false stops.</p></div>
       <div class="titem reveal"><div class="tphase">Era 7 · the verdict</div><h4>The chain earns its complexity where signal exists — and says so where it doesn't</h4><p>Strategic decision recorded, with a written bar for revisiting every suspended piece: <span class="mono">AUROC ≥ 0.75 AND Brier under the constant</span>, on fresh sessions. See the verdict below.</p></div>
       <div class="titem v reveal"><div class="tphase">Era 8 · the reversal</div><h4>Inspired by a public verifier (CLM), the state-vector dial cleared the frozen bar — live</h4><p>Five read families had failed the bar. The sixth — a tiny calibrated head over frozen encoder state vectors — went 0.9889 on a second encoder, 0.8867 on the chain's own backbone, then <b>0.9011 on 168 brand-new sessions it had never seen</b>. GATE PASSED. The dial ships. <a href="#dial">The full ladder ↓</a></p></div>
-      <div class="titem v reveal"><div class="tphase">Era 9 · live</div><h4>The dial started steering — and the open Jev replica flunked the same exam</h4><p>Entry N: the frozen dial went from logging to routing — a sub-τ completion claim is <b>vetoed</b> and the episode re-opens. Integrity held on all 149 fresh claims (zero silent passes; one disclosed mid-run bug, disposition recorded before any metric), and the harder first-claims audit landed at <b>0.8487 AUROC</b> vs constant 0.1451. Entry JO: the community Jev-Omni Q4 scored <b class="worst">below chance</b> (0.40) on the same pool where the dial scores 0.90 — calibration is paid for in own-distribution labels, not borrowed. Now running: <b>the decisive A/B</b> (entry O), verdict bar frozen before session 1.</p></div>
+      <div class="titem v reveal"><div class="tphase">Era 9 · live</div><h4>The dial started steering — and the open Jev replica flunked the same exam</h4><p>Entry N: the frozen dial went from logging to routing — a sub-τ completion claim is <b>vetoed</b> and the episode re-opens. Integrity held on all 149 fresh claims (zero silent passes; one disclosed mid-run bug, disposition recorded before any metric), and the harder first-claims audit landed at <b>0.8487 AUROC</b> vs constant 0.1451. Entry JO: the community Jev-Omni Q4 scored <b class="worst">below chance</b> (0.40) on the same pool where the dial scores 0.90 — calibration is paid for in own-distribution labels, not borrowed. Now adjudicated: <b>the decisive A/B (entry O) — NO VERIFIED IMPROVEMENT</b>: the dial verified truth at <b>0.891 AUROC</b> (its strongest fresh-pool audit, Brier 0.0616 vs constant 0.1232) with perfect routing integrity (139/139 claims matched, zero silent passes), yet the guarded stack completed <b class="worst">13.7%</b> vs vanilla <b>17.3%</b> at <b>2.04×</b> the wall clock — verification confirmed, deployment falsified, exactly what the frozen +0.10 bar was built to force. Entry P: the stuck/loop head on the same frozen embedding <b class="best">passed its pre-registered gates</b> (val AUROC <b>0.9621</b>, Brier 0.0855 vs constant 0.2022) on the first pass.</p></div>
     </div>
   </div>
 </section>
@@ -669,7 +669,7 @@
       <span class="pill">every deviation disclosed in the ledger</span>
       <span class="pill">blind adjudication from transcripts, never exit codes</span>
     </div>
-    <p class="foot" style="margin-top:10px">Full audit trail: a 1,600-line experiment ledger (IMPLEMENTATION_PLAN.md), the raw report (poc_report.html), and the structured conclusion (POC_CONCLUSION.md) — all in the repo.</p>
+    <p class="foot" style="margin-top:10px">Full audit trail: a 2,200-line experiment ledger (IMPLEMENTATION_PLAN.md), the raw report (poc_report.html), and the structured conclusion (POC_CONCLUSION.md) — all in the repo.</p>
   </div>
 </section>
 
@@ -745,9 +745,9 @@
         <p>Candidate reads, batched and parity-checked; calibrated thresholds; the ask-a-human ranking. This is the part that turned 0/5 into 5/5.</p>
       </div>
       <div class="card reveal">
-        <span class="tag amber">decisive test — running</span>
-        <h4>The A/B that settles it</h4>
-        <p>Now live (entry O): rewired chain + mechanical gates + dial-enforce <i>vs</i> vanilla + the same prompt fix — 168 paired instances per arm, identical paired pages, arm order balanced. The verdict bar was frozen before session 1: guarded wins iff the success-rate gap is <b class="mono">≥ +0.10</b>; anything less records as <b>NO VERIFIED IMPROVEMENT</b>, including if vanilla wins. Results will be recorded here after adjudication — either way.</p>
+        <span class="tag red">decisive test — answered negative</span>
+        <h4>The A/B that settled it</h4>
+        <p>Adjudicated (entry O): rewired chain + mechanical gates + dial-enforce <i>vs</i> vanilla + the same prompt fix — 168 paired instances per arm, identical paired pages, arm order balanced, bar frozen before session 1 (<b class="mono">≥ +0.10</b>). <b>Verdict: NO VERIFIED IMPROVEMENT</b> — guarded <b class="mono">23/168 (13.69%)</b> vs vanilla <b class="mono">29/168 (17.26%)</b>, gap <b class="mono">−0.036</b>, at <b>2.04×</b> the wall clock (339.8 s vs 166.8 s). The instrument was audited clean (zero silent sub-τ passes, 139/139 claims matched by evidence hash, dial audit 0.891 AUROC — its best pool yet); the deployment thesis is what failed. Recorded either way, as written.</p>
       </div>
       <div class="card reveal">
         <span class="tag green">bar written → bar met</span>
@@ -802,7 +802,7 @@
       <div class="card reveal">
         <span class="tag green">live — and the next wire</span>
         <h4>Enforce mode → stuck detection</h4>
-        <p>Done (entry N): the dial verifies <i>and steers</i> — a rejected completion claim re-opens the episode, cap 2, and the agent is told nothing about the score or threshold, so there's nothing to game. Pre-registered next (entry P): a stuck/loop head on the same embedding — one more linear layer, zero extra model calls — aimed at the measured waste of sessions that finish the task and then loop to the time cap.</p>
+        <p>Done (entry N): the dial verifies <i>and steers</i> — a rejected completion claim re-opens the episode, cap 2, and the agent is told nothing about the score or threshold, so there's nothing to game. Also done (entry P): the stuck/loop head on the same embedding — one more linear layer, zero extra model calls — <b>passed its pre-registered gates on the first pass</b> (val AUROC <span class="mono">0.9621</span>, Brier <span class="mono">0.0855 vs constant 0.2022</span>; precision 0.93 at τ = 0.5), trained on exactly the waste entry O measured — sessions that earn success and then loop to the cap. Next: controller graduation (the head acting on its own alerts, hard code rules first) — its own registered entry.</p>
       </div>
       <div class="card reveal">
         <span class="tag cyan">measured headroom</span>
@@ -831,7 +831,7 @@
       <a href="https://github.com/taeold/djev-run" target="_blank" rel="noopener">djev-run</a>
       <a href="https://github.com/llama.cpp" target="_blank" rel="noopener">llama.cpp</a>
     </div>
-    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (2,100-line experiment ledger, entries A–P)</div>
+    <div>Artifacts: <span class="mono">poc_report.html</span> (full audit report) · <span class="mono">POC_CONCLUSION.md</span> (structured conclusion) · <span class="mono">IMPLEMENTATION_PLAN.md</span> (2,200-line experiment ledger, entries A–P)</div>
     <div style="margin-top:10px">Model: one frozen open-weights 4B throughout (12B spot-check) · verifier dial: frozen heads over stock embeddings (Qwen3-8B, Gemma-4-12B) · nothing was ever fine-tuned · all numbers pre-registered · negatives reported as fully as positives.</div>
   </div>
 </footer>
