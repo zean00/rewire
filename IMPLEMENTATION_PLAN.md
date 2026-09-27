@@ -2175,3 +2175,54 @@ once, manifest + shas appended here BEFORE embedding; (5) embed once, fit
 once; (6) verdict recorded like any outcome. Scripts committed:
 eval/reports/entry_p/{PROTOCOL.md, entry_p_states_build.py,
 entry_p_embed.py, entry_p_fit.py}.
+
+### 2026-09-27, ~19:40 — ENTRY O SWEEP COMPLETE + ADJUDICATED: **NO VERIFIED IMPROVEMENT** — the frozen bar (guarded−vanilla ≥ +0.10) is not met; vanilla finishes AHEAD by 3.6 points. The verifier arc's decisive A/B answers the question it was registered to answer, honestly and negatively.
+
+**Sweep closure.** 336/336 sessions (168 paired instances × 2 arms), 2026-09-26 18:31 WIB → 2026-09-27 19:13 WIB (~24.7 h), no runner errors, zero duplicate (task, seed, arm) keys, 336 transcripts on disk. Watcher task fired at close; adjudication executed the same evening per the frozen sequencing (adjudication FIRST, then corpus backup, then entry P).
+
+**Attribution disclosure (before any recorded number — the entry-N precedent).** The host `decisions.jsonl` is APPEND-ONLY across runs: the first attribution pass swept in 879 records from the v6 sweep (04:43+, entry N's window) and the aborted first v7 launch (18:22, pre-relaunch). Fixed mechanically before any ledger number: restrict to the v7 serving span (union of session windows), widen each window's start edge by 2 s (collector-attach seam), require a unique owning session. Result: 1,017 in-span dial-enforce records; 935 attribute to exactly one session; the 82 exceptions are ALL two-owner boundary-seam records (57 cap-terminate, 13 accept, 12 outside-jurisdiction landing in the ≤2.5 s overlap between back-to-back sessions) — excluded from per-session counts, retained in the span log. Closure check added: GLOBAL evidence-sha matching over the in-span log.
+
+**PRIMARY (frozen rule, no discretion): success = (raw > 0)/168; no-terminal-page-state counts as NOT success.**
+
+| arm | success | rate |
+| --- | ---: | ---: |
+| vanilla | 29/168 | **17.26%** |
+| guarded | 23/168 | **13.69%** |
+
+Gap = −0.0357 (SE(diff) 0.0394) vs the frozen bar of +0.10. **VERDICT: NO VERIFIED IMPROVEMENT.** The direction is not marginal: vanilla is ahead. Robustness note, recorded descriptively: the no-page-state asymmetry (vanilla 52, guarded 7) is the one place the frozen rule could be criticized — but it favors GUARDED (it zeroes 31% of vanilla's sessions), and vanilla still wins. Any symmetric relaxation only widens vanilla's lead. The paired table agrees: guarded win 12, vanilla win 18, tie 138 (of 168 instances).
+
+**Cost and cap pricing (descriptive).** Wall time: guarded mean 339.8 s vs vanilla 166.8 s (2.04×). Cap-hits (480 s): guarded 76 vs vanilla 20. **Sessions that earned raw > 0 and THEN looped to the cap: guarded 11, vanilla 1** — the entry-P watch item, now measured on the decisive corpus. Guarded no-cap wall mean 223.9 s vs vanilla 124.5 s.
+
+**Q1 — routing integrity (guarded arm, per-session semantics finally live).** 27 accepts in-span, ZERO sub-τ accepts anywhere in the log. Every one of 139 transcript-recovered first claims has its decision record in the in-span log with the exact evidence sha (**139/139 global match**); 126/139 match under strict per-session interval attribution (the 13 others are the boundary-seam records above). For every record found, the live logged p equals the recomputed p (126/126, within log rounding). No silent sub-τ pass occurred anywhere.
+
+**Q2 — enforcement cost, veto loop finally measured.** 663 attributed scoring events, median 3.26 s, p90 5.43 s (host-side, includes embedding round-trip). **240 vetoes across 125 guarded sessions (115 sessions hit the full 2-veto cap, 10 one veto)** — the veto→continue→re-claim loop ran at scale. Descriptive only (intervention outcomes): vetoed sessions raw>0 = 7/125 (5.6%) vs non-vetoed 16/43 (37.2%) — sessions the dial vetoes are overwhelmingly sessions that were failing anyway; the dial's re-open gave them more rope, not more successes. Wall means: vetoed 341.6 s vs non-vetoed 334.5 s.
+
+**Q3 — cap efficacy.** No dial-caused non-termination; every vetoed episode continued to a terminal state. Cap-exit distribution: 96 total (76 guarded + 20 vanilla).
+
+**Q4 — first-claims dial audit (guarded, frozen τ\* = 0.326134, descriptive).** Pool 139 first claims, 132 labeled by page reward (19 positives). **AUROC 0.8910, Brier 0.0616 vs the pool's constant 0.1232** — the frozen bar's shape holds on a THIRD fresh pool, and the strongest yet at the operating point: accept precision 0.867 (tp13/fp2), false-alarm on false claims 0.0177 (2/113), reject rate on true completions 0.316 (6/19) — materially better than entry-L/N pools' 0.46–0.52 reject rate (this pool's claim moments are more dispersed, and the head generalizes). Reference: entry-L 0.9011/0.0861 (n=140), entry-N 0.8487/0.0963 (n=142).
+
+**The verdict's meaning, recorded plainly.** The read-and-route stack — chain reads, mechanical gates, dial-enforce at a verified 0.89-AUROC operating point with perfect routing integrity — completed FEWER tasks than the bare model (−3.6 points) at 2.04× the wall clock. Entry L/N's instrument result stands (the dial reads completion truth from frozen states, reproducibly, on three fresh pools); entry O's deployment result stands against it: on short-horizon benchmark tasks where the page reward is visible in-context and the actor is a frozen local 12B, verification does not convert into completions, and the veto loop prices worse than the cap it replaces. This is the honest negative the +0.10 bar was built to force. The dial's value claims (cheap, calibrated, safe verification) are CONFIRMED; the deployment thesis (verification improves agent success on this benchmark) is FALSIFIED. Successor work moves to where the measured waste is: entry P (the stuck/loop head — 11 guarded sessions succeeded and then looped; 76 cap-hits) targets wall-time, not completions, and needs no superiority claim to pay.
+
+**Artifacts.** `eval/reports/entry_o/entry_o_adjudicate.py` (ONE execution + the disclosed attribution fix above, before any recorded number), `entry_o_audit.json` (full per-session table); laptop `/tmp/mw_bench/main_v7.jsonl` (+`.cdp`), transcripts `main_runs_v7/`; host decisions log filtered to the v7 span (1,017 dial-enforce records).
+
+### 2026-09-27, ~20:05 — ENTRY P DISCLOSED AMENDMENT (the pre-authorized "short close => amendment first" path), recorded BEFORE the build executes. + CORPUS BACKUP COMPLETE.
+
+Corpus backup (frozen sequencing step 3) reached the host BEFORE any build:
+`/tmp/mw_bench/{main_v7.jsonl, main_v7.jsonl.cdp, main_runs_v7/}` → host
+`hybrid-qwen/corpus_v7/`, verified 336 transcript dirs on arrival (305 MB).
+
+The registered builder asserted "exactly 336 records with done=true". Actual
+closure: all 336 planned sessions ran exactly once — 336 unique (task,seed,arm)
+keys, 336 transcript dirs, 0 strays — but **84 rows carry done=false**, so the
+registered assert would refuse a closed sweep. Composition of the 84: 59
+raw=None (52 vanilla / 7 guarded — no final page state captured; these are the
+no-page-state sessions entry O's frozen rule counts as failures) + 25 raw=0.0
+(22 cap-exits, 3 clean exits ending mid-episode). `done` is the page probe's
+episode flag (`run_v7.py` fin.get("done"), runner line 327) — NOT a
+sweep-completion flag — and the entry-P label rule reads only transcripts
+(acting turns, sigs, page snapshots via ckpt_rubric.build_evidence); it never
+touches done or raw. **Amendment (the only kind the protocol allows — closing
+a logic gap, before any data is touched):** the done=true assert is replaced
+by a closure assert — 336 records, 336 unique keys, 336 matched transcript
+dirs — with the counts above recorded here. No other line changes. Build
+executes only after this record and the amended script are committed+synced.
