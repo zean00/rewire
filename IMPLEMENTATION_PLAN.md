@@ -2127,3 +2127,51 @@ loopback, -ngl 0, nice, mmap): ~3.5–4.5 s/decision, zero sweep
 interference, host and GPU untouched; server killed after the pass.
 Artifacts: eval/reports/entry_jo/ (PROTOCOL.md, entry_jo_score.py,
 entry_jo_scores.jsonl, entry_jo_results.json).
+
+## ENTRY P — PRE-REGISTERED 2026-09-27 (stuck/loop head on the v7 corpus; NOT yet executed)
+
+Registered BEFORE the v7 sweep closed (row ~210/336 at registration; the build
+script's guard was verified live: it refused to run at 215/336 sessions).
+
+**Question.** Can a linear head on the frozen dial embedding (gemma-4-12b-it,
+3840-d, pooling-last — the exact entry-L instrument pins) detect, at turn
+level, that the agent is stuck repeating an action on an unchanged page?
+Gates (val sessions, frozen): AUROC >= 0.75 AND Brier < the val constant
+predictor — the entry-L bar, mirrored.
+
+**Motivation.** The entry-O watch item: guarded cap-hits at ~2.5x the vanilla
+rate (48/98 vs 19/98 at row 196), including sessions that had already earned
+raw>0 and then looped to the 480 s cap. If this head passes, it is the
+cheapest candidate second dial head (same embedding, one more linear layer)
+and attacks a measured wall-time cost. Operational use (acting on its alerts
+inside the harness) is a LATER registered entry, not this one.
+
+**Frozen rules** (full detail in eval/reports/entry_p/PROTOCOL.md):
+- Corpus: all 336 v7 sessions, both arms pooled; builder refuses anything
+  short of 336 done=true records (short close => disclosed amendment first).
+- Unit: ACTING turn = toolCall with an intent comment
+  `// (click|type|select|check) ...`; open/observe/comment-less excluded.
+- sig = that comment line, whitespace-collapsed. label = 1 (LOOP) iff the
+  same sig occurs >= 3 times in the trailing window of 8 acting turns AND
+  the page snapshot (ckpt_rubric.build_evidence at the turn's message row)
+  is identical at all of them and at the current turn; else 0.
+- Input: frozen composite block (TASK / PAGE SNAPSHOT cap 6000 / RECENT
+  ACTIONS last <=8 sigs) — the evidence-only entry-K/L input deliberately
+  extended with action history, because a loop is defined by repetition.
+- Split: session-level, md5(session_dir)[:8] % 10 < 3 => val (~30%), frozen.
+- Instrument: entry-L pins verbatim (host gemma-4-12b-it :8998, one text per
+  POST, strictly serial, 8-row bit-exact determinism recheck, client only).
+- Training: logreg(C=10, balanced) + Platt on GroupKFold(5) grouped oof;
+  ONE execution per script; no C search, no threshold tuning on val.
+- Entry-L and the completion readout remain untouched.
+
+**Mechanics check (read-only, old data).** The label rule was exercised on 30
+v5 sessions: 125 acting rows, 9 LOOP-labeled (7.2%), 4 sessions with >= 1 loop
+— plausible minority rate; no v7 file read for testing, no metrics computed.
+
+**Sequencing (frozen).** (1) v7 closes; (2) entry-O adjudication executes and
+is recorded FIRST; (3) corpus backup reaches the host; (4) states build runs
+once, manifest + shas appended here BEFORE embedding; (5) embed once, fit
+once; (6) verdict recorded like any outcome. Scripts committed:
+eval/reports/entry_p/{PROTOCOL.md, entry_p_states_build.py,
+entry_p_embed.py, entry_p_fit.py}.
