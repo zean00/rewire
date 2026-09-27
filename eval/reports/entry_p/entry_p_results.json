@@ -1,0 +1,106 @@
+{
+ "manifest": {
+  "build": {
+   "main_v7_sha256": "7380abf7f947b2de819a4e1a9e900f2dd947bd7b37a577c83954592ba31da4eb",
+   "states_sha256": "cae1332cc69349ba42dff59a731f414765fc6c687b1aef848894029f99b6fb47",
+   "sessions": 336,
+   "stray_dirs_excluded": 0,
+   "rows": 840,
+   "positives": 157,
+   "loop_rate": 0.186905,
+   "by_split": {
+    "train": {
+     "n": 513,
+     "pos": 65
+    },
+    "val": {
+     "n": 327,
+     "pos": 92
+    }
+   },
+   "by_arm": {
+    "vanilla": {
+     "rows": 3,
+     "pos": 0
+    },
+    "guarded": {
+     "rows": 837,
+     "pos": 157
+    }
+   },
+   "window": 8,
+   "snap_cap": 6000,
+   "sig_cap": 160,
+   "task_cap": 300
+  },
+  "embed": {
+   "server": "registered combined line (host :8997, from the entry-N correction): llama-server -m hybrid-qwen/models/gemma-4-12b-it-nvfp4.gguf --jinja --embeddings --pooling last -c 65536 -ngl 99 --flash-attn on -b 1024 -ub 512",
+   "endpoint": "POST <base-url>/v1/embeddings via --url (disclosed endpoint fix), input = entry-P composite block verbatim",
+   "client": "one text per POST, strictly serial (entry-K standing instrument rule)",
+   "dim": 3840,
+   "n": 840,
+   "positives": 157,
+   "states_sha256": "cae1332cc69349ba42dff59a731f414765fc6c687b1aef848894029f99b6fb47",
+   "build_manifest_sha256": "0fac4bf81e148d233166041a283b2f91ee2203e9bdf503f2a465e9f198673d01",
+   "wall_s": 130.61,
+   "determinism_recheck_bitexact": true
+  }
+ },
+ "platt": {
+  "a": 1.6258622749004186,
+  "b": -1.9084432397095097
+ },
+ "train_oof": {
+  "auroc": 0.5112,
+  "ece10": 0.3638
+ },
+ "gate": {
+  "val_auroc": 0.9621,
+  "val_brier": 0.0855,
+  "val_constant_brier": 0.2022,
+  "val_base_rate": 0.2813,
+  "val_n": 327,
+  "val_positives": 92,
+  "gate_auroc_ge_075": true,
+  "gate_brier_lt_constant": true,
+  "gate_pass": true
+ },
+ "descriptives": {
+  "val_ece10": 0.0875,
+  "confusion_0.5": {
+   "t": 0.5,
+   "tp": 57,
+   "fp": 4,
+   "tn": 231,
+   "fn": 35,
+   "precision": 0.9344,
+   "recall": 0.6196
+  },
+  "val_f1_max": {
+   "threshold": 0.172085,
+   "f1": 0.8617,
+   "confusion": {
+    "t": 0.1720852663470388,
+    "tp": 81,
+    "fp": 15,
+    "tn": 220,
+    "fn": 11,
+    "precision": 0.8438,
+    "recall": 0.8804
+   }
+  },
+  "by_arm": {
+   "vanilla": {
+    "rows": 3,
+    "pos": 0
+   },
+   "guarded": {
+    "rows": 837,
+    "pos": 157
+   }
+  },
+  "late5_loop_share_cap_hit": 0.2304,
+  "late5_loop_share_success_raw_gt0": 0.2462,
+  "late5_loop_share_other": 0.0794
+ }
+}

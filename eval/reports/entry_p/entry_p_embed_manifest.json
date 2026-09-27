@@ -1,0 +1,12 @@
+{
+ "server": "registered combined line (host :8997, from the entry-N correction): llama-server -m hybrid-qwen/models/gemma-4-12b-it-nvfp4.gguf --jinja --embeddings --pooling last -c 65536 -ngl 99 --flash-attn on -b 1024 -ub 512",
+ "endpoint": "POST <base-url>/v1/embeddings via --url (disclosed endpoint fix), input = entry-P composite block verbatim",
+ "client": "one text per POST, strictly serial (entry-K standing instrument rule)",
+ "dim": 3840,
+ "n": 840,
+ "positives": 157,
+ "states_sha256": "cae1332cc69349ba42dff59a731f414765fc6c687b1aef848894029f99b6fb47",
+ "build_manifest_sha256": "0fac4bf81e148d233166041a283b2f91ee2203e9bdf503f2a465e9f198673d01",
+ "wall_s": 130.61,
+ "determinism_recheck_bitexact": true
+}

@@ -2280,3 +2280,59 @@ pooling last, 3840-d, one-text-per-POST serial rule, and the 8-row bit-exact
 recheck are unchanged. The embed manifest's server field now names the
 registered combined line. Re-run executes only after this record, the fixed
 script, and the sync are committed.
+
+### 2026-09-27, ~20:55 — ENTRY P EXECUTED, VERDICT: **GATE PASS** — the second head on the frozen embedding clears the entry-L bar shape with room to spare. Stuck/loop detection is real, calibrated, and session-general.
+
+**Chain of custody (all asserts green, one execution per script).** states sha
+cae1332cc69349ba… == build-manifest pin (re-verified inside embed and fit);
+embed: 840/840 blocks through the registered combined line, one text per
+POST, strictly serial, 131 s wall, **determinism recheck bit-exact TRUE**
+(8 sampled rows re-embedded singly, seed 13); fit: rows/splits/groups
+byte-aligned to states, val untouched by training, no exclusions, no tuning.
+
+**Frozen gates (val only — 327 rows / 92 positives from 100+ held-out
+sessions): PASS.**
+
+| gate | bar | measured |
+| --- | --- | ---: |
+| val AUROC | ≥ 0.75 | **0.9621** |
+| val Brier | < val constant | **0.0855 < 0.2022** (base rate 0.2813) |
+
+Descriptives (frozen list, nothing tuned): val ECE-10 **0.0875**; confusion at
+0.5: tp57 fp4 tn231 fn35 — **precision 0.934, recall 0.620**; F1-max
+(descriptive only): threshold 0.172, F1 0.862 (P 0.844 / R 0.880, tp81 fp15
+tn220 fn11). Train-oof AUROC 0.9554 / ECE-10 0.0797 (Platt a,b on GroupKFold(5)
+grouped oof, C=10 balanced throughout — no C search).
+
+**The late-turn descriptives land the entry-O watch item exactly:** LOOP labels
+concentrate in the last 5 acting turns of **cap-hit sessions (23.0%)** and
+**success sessions (24.6%)** vs **7.9%** elsewhere — the head's signal is
+precisely the "earned success and then kept going" waste that entry O measured
+(11 guarded sessions raw>0-then-looped; 76 vs 20 cap-hits). Note the input was
+frozen with action history *because* a loop is defined by repetition — the
+head reads repetition through the frozen embedding rather than string equality,
+and must generalize to held-out sessions, which it does.
+
+**Reading.** The moat extends: the same page-reward-labeled corpus that taught
+the completion dial taught a second behavior, same embedding, one more linear
+layer, zero extra model calls, and it cleared the same pre-registered bar shape
+on the first pass. What this entry deliberately does NOT do: act on alerts
+inside the harness — controller graduation (hard code rules before the head,
+conservative defaults, shadow-first switch-over) is its own future registered
+entry, per the frozen sequencing and the practitioner pattern.
+
+**Artifacts (committed under `eval/reports/entry_p/`, sha256).**
+`entry_p_states.jsonl` cae1332cc69349ba… · `entry_p_build_manifest.json` ·
+`entry_p_emb.npz` 130c8c1f4f69e8c7… · `entry_p_embed_manifest.json`
+7954ae1d07c9e827… (determinism_recheck_bitexact: true; server = the registered
+combined line per the disclosed endpoint fix) · `entry_p_results.json`
+9688704d926045cf… · scripts as committed at 466395c + the two disclosed fixes
+(done-flag closure amendment; endpoint via --url). Host copies under
+`hybrid-qwen/eval/reports/entry_p/`; corpus backup `hybrid-qwen/corpus_v7/`.
+
+**Verifier-arc scoreboard (the two-dial lab, both honest):** completion dial —
+instrument CONFIRMED on three fresh pools (0.9011 / 0.8487 / 0.8910), deployment
+FALSIFIED by entry O; stuck/loop dial — instrument CONFIRMED on its first
+pre-registered pass (0.9621 / 0.0855), deployment untested by design. The
+program's next lever is wall-time, not completions, exactly as the entry-O
+verdict prescribed.
