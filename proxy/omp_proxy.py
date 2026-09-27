@@ -72,6 +72,14 @@ except Exception as _e:  # pragma: no cover
           flush=True)
     dial_enforce = None
 
+# (v3.18.0) entry-R mechanical brake — stdlib-only sibling module, same
+# defensive posture: absent or broken = the brake is absent
+try:
+    import brake  # noqa: E402
+except Exception as _e:  # pragma: no cover
+    print(f"brake unavailable (continuing without): {_e!r}", flush=True)
+    brake = None
+
 LOGDIR = ROOT / "eval/reports/omp_arms"
 DECISIONS = LOGDIR / "decisions.jsonl"
 
@@ -274,6 +282,10 @@ def load_remote(path) -> dict | None:
         # "dial disabled" with the config saying enabled (the v3.14.0
         # dropped-key launch bug, one layer over)
         "dial": cfg.get("dial"),
+        # (v3.18.0) the entry-R brake block passes through raw — brake
+        # .init() owns the enabled check (same pattern as dial)
+        "brake": cfg.get("brake"),
+        "brake_model": str(cfg.get("brake_model", "gemma-12b-brake")),
         }
     except Exception as e:
         print(f"backend config unreadable ({e!r}); remote arm disabled", flush=True)
@@ -2861,6 +2873,19 @@ def dial_gate_ship(messages, content):
     return (d["note"], "tool_calls", [eval_cell(code, "dial-reobserve")])
 
 
+def brake_ship(messages):
+    """(v3.18.0) One funnel for the entry-R mechanical brake, consulted at
+    every brake-arm request BEFORE chain compute. On fire it returns the
+    payload that ends the episode: the frozen brake note shipped as a
+    prose-only completion (no tool calls -> the harness terminates). No
+    brake configured = None, always."""
+    if brake is None:
+        return None
+    return brake.check(messages, log_decision,
+                       session_key=session_seed(messages)
+                       or tab_name(messages))
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -2907,7 +2932,16 @@ class Handler(BaseHTTPRequestHandler):
         def compute():
             if mode == "remote":
                 return remote_passthrough(req)
-            if mode == "decide":
+            if mode in ("decide", "brake"):
+                if mode == "brake":
+                    # (v3.18.0) entry-R mechanical brake, BEFORE any chain
+                    # compute — a stuck session terminates without a model
+                    # call. Serving below is the guarded chain unchanged;
+                    # the brake config omits the dial block, so the
+                    # dial_gate_ship calls in this path are no-ops.
+                    _b = brake_ship(req["messages"])
+                    if _b is not None:
+                        return _b
                 dom = detect_domain(req["messages"])
                 if dom == "coding":
                     tool_call, finish, log = run_code_chain(req)
@@ -3086,6 +3120,15 @@ def main():
         if dial_enforce is not None:
             print(f"enforce dial: {dial_enforce.init(REMOTE.get('dial'))}",
                   flush=True)
+        # (v3.18.0) the entry-R brake rides the backend config's brake
+        # block; the arm's wire name binds only when the brake is live
+        if brake is not None:
+            print(f"brake: {brake.init(REMOTE.get('brake'))}", flush=True)
+            if brake.CFG is not None:
+                MODEL_NAMES[REMOTE["brake_model"]] = "brake"
+                print(f"brake arm: poc-proxy/{REMOTE['brake_model']} -> "
+                      "decide serving minus dial, brake pre-check",
+                      flush=True)
     if REMOTE and REMOTE.get("chain"):
         # (v3.14.0) the decide arm travels with the backend: reads over
         # llama-server HTTP (eval/chain_http.py), fallbacks to the remote
