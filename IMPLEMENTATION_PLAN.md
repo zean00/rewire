@@ -2436,3 +2436,72 @@ the adversarial concern the two external sources raised for this stack.
 **Descriptives (no bars):** brake fire rate (sessions and instances), braked-session success, retry success rate, wall distributions by outcome, and a ZERO-COST brake replay over the CLOSED v7 guarded transcripts (`eval/reports/entry_r/brake_replay.py`): per-session first-fire point, wall at fire, counterfactual savings — run before the sweep as the rule's sanity check on real data (the vanilla arm never emits intent comments, so the rule cannot fire there — corpus observation from entry P).
 
 **Sequencing / integrity.** Register -> implement (`proxy/brake.py`, omp_proxy v3.18.0 dispatch, v8 config) -> unit-smoke the module on synthetic wire shapes -> replay sanity -> commit + sync -> ps-verified relaunch of the :8990 proxy with the v8 config -> live sanity session(s) -> ONE sweep execution (resumable; any disclosed fix is appended to this ledger BEFORE any re-run) -> adjudicate on the frozen bars from /tmp/mw_bench records only -> verdict appended here. The standing :8999 proxy, the combined server :8997, and the local page server :8077 are untouched.
+
+### 2026-09-28 — ENTRY R pre-sweep replay (the registered zero-cost descriptive, run BEFORE the sweep). Parity 837/837 acting turns vs the entry-P corpus.
+
+`eval/reports/entry_r/brake_replay.py`, one execution over the CLOSED v7
+guarded transcripts: at every request, the frozen brake rule applied to the
+wire state that request would have presented. 28/168 sessions (16.7%)
+would have braked; first fires land after 4-15 acting turns (median 10),
+mean wall at fire 212.5s. Two findings, recorded before any v8 data:
+
+1. **The brake's mechanical cost is visible: 7 of the 23 v7-guarded
+   successes sat in a rule-matching loop before recovering** — under the
+   brake arm those episodes terminate at the fire and fall to the retry.
+   On these trajectories PRIMARY's arithmetic ceiling is (16 non-braked
+   successes + 28 retries)/168 = 26.2%, BELOW the +10pp bar (27.26%) even
+   if every retry succeeded. PRIMARY therefore measures whether dial-free
+   serving shifts trajectories enough to escape that ceiling; the honest
+   expectation is that it fails, and the descriptive value is the real
+   fire rate, the retry success rate, and the wall.
+2. **Counterfactual wall (this replay alone) is 299.5s vs guarded 339.8s**
+   — short of the 271.8s SECONDARY bar, but the replay cannot remove the
+   dial's own pre-fire overhead (v7-guarded ran 2.04x vanilla wall), which
+   the brake arm genuinely drops. SECONDARY remains live.
+
+Also fixed pre-data: the replay initially extracted one acting turn per
+transcript ROW (836) while the corpus's unit is one per intent-comment
+BLOCK occurrence (837 — one guarded message carried two intent-comment
+calls). The replay now matches the corpus unit; the live brake module
+already counted per tool call. No serving data existed at either fix.
+
+### 2026-09-28 — ENTRY R VERDICT: **BRAKE DELIVERS TIME** (SECONDARY pass, PRIMARY fail). One execution, 168/168 instances, 188 sessions (168 primary + 20 registered retries), sweep closed "SWEEP DONE 168".
+
+**Frozen bars, read from /tmp/mw_bench only.**
+
+| | brake (v8) | v7 vanilla (same 168 pages) | v7 guarded (same 168 pages) |
+| --- | ---: | ---: | ---: |
+| instance success | **27/168 = 16.07%** | 29/168 = 17.26% | 23/168 = 13.69% |
+| instance wall mean | **266.1 s** | 166.8 s | 339.8 s |
+
+- **PRIMARY (BRAKE WINS): FAIL** — gap vs vanilla −0.0119 (bar ≥ +0.10). The replay's
+  ceiling warning was the story: braked failures that retried almost never converted
+  (1 success in 20 retries).
+- **SECONDARY (BRAKE DELIVERS TIME): PASS** — wall mean 266.1 s ≤ 0.8 × 339.8 = 271.8 s
+  (ratio 0.783) AND instance success 16.07% ≥ the 10.69% floor.
+
+**Descriptives (frozen list).** Brake fired on 27/168 primary sessions (16.1%; the
+pre-sweep replay said 28/168 — the live rate matched the rehearsal). 8 of the 27 fires
+ended sessions whose page reward was ALREADY banked (the loop was a post-success
+"victory lap"). Success wall mean 109.2 s vs failure 296.2 s; retried instances cost
+498.9 s mean (the retry's price when it doesn't convert). Cap-exits fell to 49/188
+sessions (26%) from guarded's 76/168 (45%). Paired deltas: +4 successes vs guarded,
+−2 vs vanilla on identical pages.
+
+**What this closes (the honest reading, recorded now).** The mechanical brake does
+exactly what it is: a clock-saver, not a solver. It ends stuck "victory laps" and
+futile flailing ~2 minutes earlier on average with no completion penalty versus the
+bare model (16.1% vs 17.3%, within noise) and a slight lift over the guarded stack it
+replaces (+4 paired, at 0.78× the wall). The deeper finding is the retry result:
+when a stuck worker trips a loop breaker, a FRESH page almost never rescues it
+(1/20) — the stuckness lives in the frozen model, not the page instance. The dial's
+exit-door check (entry O) and the brake's mid-task breaker (entry R) are the same
+lesson from two directions: cheaper interventions that cut WASTE are what the frozen
+model will give up; completions themselves don't move.
+
+**Artifacts.** eval/reports/entry_r/{brake.py (proxy copy), run_v8.py, brake_replay.py,
+brake_replay.json}, /tmp/mw_bench/main_v8{.jsonl,.jsonl.cdp,_instances.jsonl},
+proxy v3.18.0 (dial removed by config, brake pre-compute check), proxy_v8.log banner
+recorded. The program's final state: ONE frozen model + decide chain serving; dial =
+validated honest-verifier (log/annotate posture); brake = validated clock-saver;
+label factory = validated data asset. No further sweeps pre-registered.
