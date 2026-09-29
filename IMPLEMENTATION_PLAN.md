@@ -2505,3 +2505,64 @@ proxy v3.18.0 (dial removed by config, brake pre-compute check), proxy_v8.log ba
 recorded. The program's final state: ONE frozen model + decide chain serving; dial =
 validated honest-verifier (log/annotate posture); brake = validated clock-saver;
 label factory = validated data asset. No further sweeps pre-registered.
+
+---
+
+## PROBE RECORD — Mirai S 27B 2.4-bit GGUF (2026-09-29, not a registered entry)
+
+User mandate: probe `trymirai/Qwen3.8-27B-S-experimental` via
+`alesha-pro/Qwen3.8-27B-S-mirai-GGUF` on the host 16 GB GPU; "if you think from
+initial probe it doesn't looks promising, you can drop the long session test
+(168 session)". Full record: eval/reports/entry_s/PROBE.md.
+
+Setup: fork `alesha-pro/llama.cpp-mirai-s` (base d834d44e6, build b59ae80, CUDA
+13.3 native) cloned/built on the host; GGUF 11,173,346,688 bytes downloaded;
+served :8995 with the card's flags (MTP dropped during the logprob check, not
+re-enabled); 11,916/16,303 MiB VRAM, load <5 s. Combined gemma server (:8997)
+stopped for the probe — GPU occupancy disclosed here — and restored after,
+with the entry-P embeddings bit-exact recheck re-run.
+
+Probe battery all PASS: coherence; native tool calls with the brake rule's exact
+intent-comment wire format (`// click "next" @e6`); clean completion claim;
+4.2 k-token multi-turn stable at 1,208 tok/s prompt / 85 tok/s decode; and the
+decide chain's d2 grammar-forced reads verified on the fork (Paris −1.60 /
+Banana −35.70 / Tokyo −24.32 — real teacher-forced logprobs; the chain's
+`enable_thinking:false` and `reasoning_budget_tokens:0` knobs both honored).
+An initial "fork logprobs broken" reading was a test-design error (echo-task
+p≈1 tokens are the true values) and is corrected here.
+
+DISCLOSED FIX (one config line, before any model-relevant sanity data was
+recorded): the mirai proxy config was created with `base_url
+http://127.0.0.1:8995/v1` while the server binds only the Tailscale IP — the
+first 4-session sanity battery never reached the model (connection-refused →
+fail-open chain cells; those sessions measure nothing and are retained,
+distinguishable by seed/timestamp). Fixed to `http://100.120.167.9:8995/v1`,
+proxy :8991 restarted, battery re-run.
+
+Second battery (real harness: laptop omp → proxy :8991 chain+brake, no dial →
+mirai :8995), fresh seeds: click-button WIN 34.8 s (fastest clean win the
+program has served); login-user cap-480 s loop; enter-text cap-480 s loop
+(typed "1" and submitted before reading the instruction); use-autocomplete
+wrong at 144 s. 1/4 with two wall-burners. Profile: impulsive first moves,
+off-contract API hallucination under blockage (`tab.run`/`tab.id`/puppeteer —
+none offered by the harness), no loop discipline (brake correctly silent:
+sigs vary, off-recipe turns carry no intent comment).
+
+VERDICT: not promising as a program worker — the 168 is DROPPED per the
+mandate. Everything mechanical passed; the failure is worker judgment on the
+frozen harness contract, consistent with the program's scaffolding thesis (a
+bigger, differently-raised model does not inherit contract discipline; the
+contract is a per-worker frozen artifact). What would reopen it: a mirai-raised
+contract prompt, thinking-off acting turns, or the full non-experimental Mirai
+release — each a new phase, not a probe fix.
+
+Artifacts: eval/reports/entry_s/{PROBE.md, sanity_mirai.py},
+eval/proxy_chain_remote_mirai.json (host), /tmp/mw_bench/sanity_runs_mirai/,
+~/.omp/agent/models.yml `poc-mirai` block (retained, inert while :8991 is down).
+
+Restoration (same day): mirai server (:8995) and mirai proxy (:8991) stopped by
+PID; combined gemma server relaunched on :8997 with the exact registered line
+(entry-N correction), PID 2766305. Entry-P embeddings recheck: first 8
+registered rows re-embedded (one POST each, strictly serial) against the frozen
+entry_p_emb.npz — 8/8 BIT-EXACT (maxdiff 0.00e+00). The instrument is
+unchanged; the standing serving state is fully restored.
